@@ -83,4 +83,4 @@ else:
 
 # --- Footer ---
 st.divider()
-st.caption("Data Source:
+st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")

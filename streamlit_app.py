@@ -27,7 +27,9 @@ def load_data():
         st.error(f"Error loading data: {e}")
         return None, None
 
-state_df, county_df = load_data()
+with st.spinner("Loading data..."):
+    state_df, county_df = load_data()
+
 if state_df is None or county_df is None:
     st.stop()
 
@@ -88,14 +90,13 @@ else:
 # --- Plot function ---
 def plot_chart(df, label, color_shade=1.0):
     # Identify which metric columns exist in the dataset
-    cols = [c for c in df.columns if any(m in c for m in possible_metrics)]
-    metrics_found = [m for m in possible_metrics if any(m in c for c in cols)]
+    cols = [c for c in df.columns if c in possible_metrics]
+    metrics_found = [m for m in possible_metrics if m in cols]
 
     values = []
     for m in metrics_found:
-        col = next((c for c in df.columns if m in c), None)
-        if col and pd.notna(df[col].values[0]):
-            values.append(float(df[col].values[0]))
+        if m in df.columns and pd.notna(df[m].values[0]):
+            values.append(float(df[m].values[0]))
         else:
             values.append(None)
 
@@ -135,13 +136,15 @@ col1, col2 = (st.columns(2) if compare_toggle else (st.container(), None))
 with col1:
     st.subheader(f"📊 {title_text}")
     st.plotly_chart(plot_chart(subset, title_text), use_container_width=True)
-    st.dataframe(subset.style.highlight_max(axis=1, color="#C2F0C2"))
+    numeric_cols = subset.select_dtypes(include="number").columns
+    st.dataframe(subset.style.highlight_max(axis=1, subset=numeric_cols, color="#C2F0C2"))
 
 if compare_toggle and compare_subset is not None and not compare_subset.empty:
     with col2:
         st.subheader(f"📊 Comparison — {compare_label}")
         st.plotly_chart(plot_chart(compare_subset, f"{compare_label}", color_shade=0.45), use_container_width=True)
-        st.dataframe(compare_subset.style.highlight_max(axis=1, color="#E2D9F3"))
+        numeric_cols = compare_subset.select_dtypes(include="number").columns
+        st.dataframe(compare_subset.style.highlight_max(axis=1, subset=numeric_cols, color="#E2D9F3"))
 
 # --- Legend ---
 st.markdown("---")

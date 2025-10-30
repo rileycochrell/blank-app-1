@@ -17,8 +17,8 @@ Use the dropdowns below to explore data for **New Mexico** or specific **countie
 @st.cache_data
 def load_data():
     # ✅ Replace these with the *raw* GitHub file URLs
-    state_url = "https://raw.githubusercontent.com/rileycochrell/idktrying/main/EJI_StateAverages_RPL.csv"
-    county_url = "https://raw.githubusercontent.com/rileycochrell/idktrying/main/EJI_NewMexico_CountyMeans.csv"
+    state_url = "https://github.com/rileycochrell/blank-app-1/raw/refs/heads/main/EJI_StateAverages_RPL.csv"
+    county_url = "https://github.com/rileycochrell/blank-app-1/raw/refs/heads/main/EJI_NewMexico_CountyMeans.csv"
     
     try:
         state_df = pd.read_csv(state_url)

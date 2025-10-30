@@ -87,4 +87,30 @@ elif selected_parameter == "New Mexico":
         st.warning("No New Mexico data found in the state file.")
     else:
         st.subheader("📋 New Mexico Statewide EJI Scores")
-        st.dataframe(nm_row, hide_in
+        st.dataframe(nm_row, hide_index=True)
+
+        nm_values = nm_row[metrics].iloc[0]
+        plot_metrics("EJI Metrics — New Mexico", nm_values.values, metrics)
+
+        # --- Comparison Option ---
+        compare = st.radio("Would you like to compare with another state?", ["No", "Yes"])
+        if compare == "Yes":
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("### New Mexico")
+                plot_metrics("New Mexico", nm_values.values, metrics)
+
+            with col2:
+                other_state = st.selectbox(
+                    "Select state to compare:",
+                    sorted([s for s in state_df["State"].unique() if s.lower() != "new mexico"])
+                )
+                other_row = state_df[state_df["State"] == other_state]
+                if not other_row.empty:
+                    other_values = other_row[metrics].iloc[0]
+                    st.write(f"### {other_state}")
+                    plot_metrics(other_state, other_values.values, metrics)
+
+# --- Footer ---
+st.divider()
+st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")

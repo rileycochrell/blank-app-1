@@ -92,7 +92,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         marker_color=[dataset1_colors[m] for m in metrics],
         offsetgroup=0,
         width=0.35,
-        hovertemplate=f"{label1}: %{y:.3f}<extra></extra>"
+        hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
 
     fig.add_trace(go.Bar(
@@ -102,7 +102,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         marker_color=[dataset2_colors[m] for m in metrics],
         offsetgroup=1,
         width=0.35,
-        hovertemplate=f"{label2}: %{y:.3f}<extra></extra>"
+        hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
 
     # Layout

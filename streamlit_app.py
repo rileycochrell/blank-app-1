@@ -118,7 +118,7 @@ if selected_parameter == "County":
                 showgrid=True
             )
         )
-st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):

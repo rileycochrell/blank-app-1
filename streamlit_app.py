@@ -82,14 +82,14 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
 
-   fig.update_layout(
-    yaxis=dict(
-        range=[0, 1],
-        dtick=0.25,
-        gridcolor="#E0E0E0",
-        showgrid=True
+    fig.update_layout(
+        yaxis=dict(
+            range=[0, 1],
+            dtick=0.25,
+            gridcolor="#E0E0E0",
+            showgrid=True
+        )
     )
-)
 
     st.plotly_chart(fig, use_container_width=True)
 

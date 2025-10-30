@@ -4,6 +4,7 @@ st.title("Environmental Justice Index Visualization (NM)")
 st.write("The EJI is a value representing a percentile ranking relative to communities nationwide.")
 st.write("The value shows the percentage of the nation which this")
 # perameter1 is to view the eji of that, so EJI of County or EJI of New Mexico
+
 counties = [
 "Bernalillo County", "Chaves County", "Cibola County", "Curry County",
 "Doña Ana County", "Eddy County", "Grant County", "Lincoln County",
@@ -15,6 +16,7 @@ counties = [
 "Harding County", "Roosevelt County", "De Baca County", "Quay County",
 "Union County"
 ]
+
 states = [
 "Alabama",    "Arizona",    "Alaska",    "Arkansas",
 "California",    "Colorado",    "Florida",    "Connecticut",
@@ -38,9 +40,11 @@ st.write(f"You selected {selected_perameter1} vs United States")
 if selected_perameter1 == "County":
 	selected_County1 = st.selectbox("Select a New Mexico County:", counties)
 
+elif selected_parameter1 == "New Mexico":
+	
 
 	
 	
-else: selected_parameter1 == "New Mexico"
-st.write("hi")
+else: selected_parameter1 == "Nothin"
+
 	

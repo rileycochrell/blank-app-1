@@ -1,8 +1,8 @@
 import streamlit as st
 
-st.title("Environmental Justice Index Visualization (NM)")
-st.write("The EJI is a value representing a percentile ranking relative to communities nationwide.")
-st.write("The value shows the percentage of the nation which this")
+st.title("Environmental Justice Index Visualization (New Mexico)")
+st.write("The Environmental Justice Index (EJI) represents a percentile ranking relative to communities nationwide.")
+st.write("Use the dropdown menus below to explore EJI data for New Mexico or specific counties compared to the U.S. average.")
 # perameter1 is to view the eji of that, so EJI of County or EJI of New Mexico
 
 counties = [
@@ -40,11 +40,6 @@ st.write(f"You selected {selected_perameter1} vs United States")
 if selected_perameter1 == "County":
 	selected_County1 = st.selectbox("Select a New Mexico County:", counties)
 
-elif selected_parameter1 == "New Mexico":
-	
-
-	
-	
-else: selected_parameter1 == "Nothin"
+else:
 
 	

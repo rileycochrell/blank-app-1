@@ -56,22 +56,22 @@ st.write(f"**You selected:** {selected_parameter}")
 
 # --- Helper function to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Create comparison DataFrame (rows = datasets, columns = metrics) ---
-    compare_df = pd.DataFrame({
-        "Metric": metrics,
-        label1: list(data1.values),
-        label2: list(data2.values)
-    }).set_index("Metric").T
+    # --- Create comparison table (datasets as rows, metrics as columns) ---
+    compare_df = pd.DataFrame([list(data1.values), list(data2.values)], 
+                              index=[label1, label2], 
+                              columns=metrics)
 
-    # Display transposed table
+    # --- Display table ---
     st.subheader("📊 Data Comparison Table")
     st.dataframe(compare_df.style.format("{:.3f}"), hide_index=False)
 
-    # --- Reshape for plotting ---
-    plot_df = compare_df.T.reset_index().melt(id_vars="index", var_name="Dataset", value_name="Score")
-    plot_df.rename(columns={"index": "Metric"}, inplace=True)
+    # --- Prepare data for grouped bar chart ---
+    plot_df = compare_df.reset_index().melt(id_vars="index", 
+                                            var_name="Metric", 
+                                            value_name="Score")
+    plot_df.rename(columns={"index": "Dataset"}, inplace=True)
 
-    # --- Create grouped bar chart ---
+    # --- Grouped bar chart ---
     fig = px.bar(
         plot_df,
         x="Metric",
@@ -82,7 +82,6 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
 
-    # Keep y-axis consistent
     fig.update_layout(yaxis=dict(range=[0, 1]))
     st.plotly_chart(fig, use_container_width=True)
 

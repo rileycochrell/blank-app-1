@@ -56,19 +56,20 @@ st.write(f"**You selected:** {selected_parameter}")
 
 # --- Helper function to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Create comparison DataFrame ---
+    # --- Create comparison DataFrame (rows = datasets, columns = metrics) ---
     compare_df = pd.DataFrame({
         "Metric": metrics,
         label1: list(data1.values),
         label2: list(data2.values)
-    })
+    }).set_index("Metric").T
 
-    # Display table before plot
+    # Display transposed table
     st.subheader("📊 Data Comparison Table")
-    st.dataframe(compare_df.style.format({label1: "{:.3f}", label2: "{:.3f}"}), hide_index=True)
+    st.dataframe(compare_df.style.format("{:.3f}"), hide_index=False)
 
     # --- Reshape for plotting ---
-    plot_df = compare_df.melt(id_vars="Metric", var_name="Dataset", value_name="Score")
+    plot_df = compare_df.T.reset_index().melt(id_vars="index", var_name="Dataset", value_name="Score")
+    plot_df.rename(columns={"index": "Metric"}, inplace=True)
 
     # --- Create grouped bar chart ---
     fig = px.bar(
@@ -81,7 +82,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
 
-    # consistent scale
+    # Keep y-axis consistent
     fig.update_layout(yaxis=dict(range=[0, 1]))
     st.plotly_chart(fig, use_container_width=True)
 

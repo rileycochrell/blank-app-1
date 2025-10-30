@@ -56,13 +56,23 @@ st.write(f"**You selected:** {selected_parameter}")
 
 # --- Helper function to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
+    # --- Create comparison DataFrame ---
     compare_df = pd.DataFrame({
-        "Metric": metrics * 2,
-        "Score": list(data1.values) + list(data2.values),
-        "Dataset": [label1] * len(metrics) + [label2] * len(metrics)
+        "Metric": metrics,
+        label1: list(data1.values),
+        label2: list(data2.values)
     })
+
+    # Display table before plot
+    st.subheader("📊 Data Comparison Table")
+    st.dataframe(compare_df.style.format({label1: "{:.3f}", label2: "{:.3f}"}), hide_index=True)
+
+    # --- Reshape for plotting ---
+    plot_df = compare_df.melt(id_vars="Metric", var_name="Dataset", value_name="Score")
+
+    # --- Create grouped bar chart ---
     fig = px.bar(
-        compare_df,
+        plot_df,
         x="Metric",
         y="Score",
         color="Dataset",
@@ -70,7 +80,9 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         title=f"EJI Metric Comparison — {label1} vs {label2}",
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
-    fig.update_layout(yaxis=dict(range=[0, 1]))  # consistent scale (0–1)
+
+    # consistent scale
+    fig.update_layout(yaxis=dict(range=[0, 1]))
     st.plotly_chart(fig, use_container_width=True)
 
 # --- MAIN DISPLAY ---

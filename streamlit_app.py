@@ -10,7 +10,9 @@ st.title("🌎 Environmental Justice Index Visualization (New Mexico)")
 st.write("""
 The **Environmental Justice Index (EJI)** measures cumulative environmental, social, and health burdens 
 in communities relative to others across the U.S.  
-Use the dropdowns below to explore data for **New Mexico** or specific **counties**, and optionally **compare datasets**.
+
+Use the dropdowns below to explore data for **New Mexico** or specific **counties**,  
+and optionally compare datasets side-by-side.
 """)
 
 # --- Load data from GitHub ---
@@ -30,9 +32,20 @@ state_df, county_df = load_data()
 if state_df is None or county_df is None:
     st.stop()
 
-# --- Prep data ---
-metrics = ["Mean_EJI", "Mean_EBM", "Mean_SVM", "Mean_HVM", "Mean_CBM", "Mean_EJI_CBM"]
+# --- Rename columns to RPL-style ---
+rename_map = {
+    "Mean_EJI": "RPL_EJI",
+    "Mean_EBM": "RPL_EBM",
+    "Mean_SVM": "RPL_SVM",
+    "Mean_HVM": "RPL_HVM",
+    "Mean_CBM": "RPL_CBM",
+    "Mean_EJI_CBM": "RPL_EJI_CBM"
+}
+state_df.rename(columns=rename_map, inplace=True)
+county_df.rename(columns=rename_map, inplace=True)
 
+# --- Define metrics and dropdown options ---
+metrics = ["RPL_EJI", "RPL_EBM", "RPL_SVM", "RPL_HVM", "RPL_CBM", "RPL_EJI_CBM"]
 counties = sorted(county_df["County"].dropna().unique())
 states = sorted(state_df["State"].dropna().unique())
 parameter1 = ["New Mexico", "County"]
@@ -41,14 +54,23 @@ parameter1 = ["New Mexico", "County"]
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
-# Helper function for plots
-def plot_metrics(title, values, labels):
+# --- Helper function to plot grouped comparison ---
+def plot_comparison(data1, data2, label1, label2, metrics):
+    compare_df = pd.DataFrame({
+        "Metric": metrics * 2,
+        "Score": list(data1.values) + list(data2.values),
+        "Dataset": [label1] * len(metrics) + [label2] * len(metrics)
+    })
     fig = px.bar(
-        x=labels,
-        y=values,
-        labels={"x": "EJI Metric", "y": "Score"},
-        title=title
+        compare_df,
+        x="Metric",
+        y="Score",
+        color="Dataset",
+        barmode="group",
+        title=f"EJI Metric Comparison — {label1} vs {label2}",
+        labels={"Score": "RPL Value", "Metric": "Metric"},
     )
+    fig.update_layout(yaxis=dict(range=[0, 1]))  # consistent scale (0–1)
     st.plotly_chart(fig, use_container_width=True)
 
 # --- MAIN DISPLAY ---
@@ -63,32 +85,27 @@ if selected_parameter == "County":
         st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
-        plot_metrics(f"EJI Metrics — {selected_county}", county_values.values, metrics)
+        st.plotly_chart(px.bar(
+            x=metrics, y=county_values.values,
+            labels={"x": "EJI Metric", "y": "RPL Value"},
+            title=f"EJI Metrics — {selected_county}"
+        ), use_container_width=True)
 
         # --- Comparison Option ---
-        compare = st.radio("Would you like to compare with another dataset?", ["No", "Yes"])
-        if compare == "Yes":
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write(f"### {selected_county}")
-                plot_metrics(f"{selected_county}", county_values.values, metrics)
-
-            with col2:
-                compare_type = st.radio("Compare with:", ["State", "County"])
-                if compare_type == "State":
-                    comp_state = st.selectbox("Select state:", states)
-                    comp_row = state_df[state_df["State"] == comp_state]
-                    if not comp_row.empty:
-                        comp_values = comp_row[metrics].iloc[0]
-                        st.write(f"### {comp_state}")
-                        plot_metrics(f"{comp_state}", comp_values.values, metrics)
-                else:
-                    comp_county = st.selectbox("Select county:", [c for c in counties if c != selected_county])
-                    comp_row = county_df[county_df["County"] == comp_county]
-                    if not comp_row.empty:
-                        comp_values = comp_row[metrics].iloc[0]
-                        st.write(f"### {comp_county}")
-                        plot_metrics(f"{comp_county}", comp_values.values, metrics)
+        if st.checkbox("Compare with another dataset"):
+            compare_type = st.radio("Compare with:", ["State", "County"])
+            if compare_type == "State":
+                comp_state = st.selectbox("Select state:", states)
+                comp_row = state_df[state_df["State"] == comp_state]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(county_values, comp_values, selected_county, comp_state, metrics)
+            else:
+                comp_county = st.selectbox("Select county:", [c for c in counties if c != selected_county])
+                comp_row = county_df[county_df["County"] == comp_county]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(county_values, comp_values, selected_county, comp_county, metrics)
 
 elif selected_parameter == "New Mexico":
     nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
@@ -100,32 +117,27 @@ elif selected_parameter == "New Mexico":
         st.dataframe(nm_row, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
-        plot_metrics("EJI Metrics — New Mexico", nm_values.values, metrics)
+        st.plotly_chart(px.bar(
+            x=metrics, y=nm_values.values,
+            labels={"x": "EJI Metric", "y": "RPL Value"},
+            title="EJI Metrics — New Mexico"
+        ), use_container_width=True)
 
         # --- Comparison Option ---
-        compare = st.radio("Would you like to compare with another dataset?", ["No", "Yes"])
-        if compare == "Yes":
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("### New Mexico")
-                plot_metrics("New Mexico", nm_values.values, metrics)
-
-            with col2:
-                compare_type = st.radio("Compare with:", ["State", "County"])
-                if compare_type == "State":
-                    comp_state = st.selectbox("Select state:", [s for s in states if s.lower() != "new mexico"])
-                    comp_row = state_df[state_df["State"] == comp_state]
-                    if not comp_row.empty:
-                        comp_values = comp_row[metrics].iloc[0]
-                        st.write(f"### {comp_state}")
-                        plot_metrics(f"{comp_state}", comp_values.values, metrics)
-                else:
-                    comp_county = st.selectbox("Select county:", counties)
-                    comp_row = county_df[county_df["County"] == comp_county]
-                    if not comp_row.empty:
-                        comp_values = comp_row[metrics].iloc[0]
-                        st.write(f"### {comp_county}")
-                        plot_metrics(f"{comp_county}", comp_values.values, metrics)
+        if st.checkbox("Compare with another dataset"):
+            compare_type = st.radio("Compare with:", ["State", "County"])
+            if compare_type == "State":
+                comp_state = st.selectbox("Select state:", [s for s in states if s.lower() != "new mexico"])
+                comp_row = state_df[state_df["State"] == comp_state]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(nm_values, comp_values, "New Mexico", comp_state, metrics)
+            else:
+                comp_county = st.selectbox("Select county:", counties)
+                comp_row = county_df[county_df["County"] == comp_county]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(nm_values, comp_values, "New Mexico", comp_county, metrics)
 
 # --- Footer ---
 st.divider()

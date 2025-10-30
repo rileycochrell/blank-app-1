@@ -38,6 +38,9 @@ def load_data():
         return None, None
 
 state_df, county_df = load_data()
+st.subheader("🔍 Debug Info — Columns Detected")
+st.write("State CSV Columns:", list(state_df.columns))
+st.write("County CSV Columns:", list(county_df.columns))
 
 if state_df is None or county_df is None:
     st.stop()

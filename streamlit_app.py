@@ -82,7 +82,15 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
 
-    fig.update_layout(yaxis=dict(range=[0, 1]))
+   fig.update_layout(
+    yaxis=dict(
+        range=[0, 1],
+        dtick=0.25,
+        gridcolor="#E0E0E0",
+        showgrid=True
+    )
+)
+
     st.plotly_chart(fig, use_container_width=True)
 
 # --- MAIN DISPLAY ---
@@ -97,11 +105,20 @@ if selected_parameter == "County":
         st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
-        st.plotly_chart(px.bar(
+        fig = px.bar(
             x=metrics, y=county_values.values,
             labels={"x": "EJI Metric", "y": "RPL Value"},
             title=f"EJI Metrics — {selected_county}"
-        ), use_container_width=True)
+        )
+        fig.update_layout(
+            yaxis=dict(
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True
+            )
+        )
+st.plotly_chart(fig, use_container_width=True)
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):
@@ -129,11 +146,20 @@ elif selected_parameter == "New Mexico":
         st.dataframe(nm_row, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
-        st.plotly_chart(px.bar(
-            x=metrics, y=nm_values.values,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
-            title="EJI Metrics — New Mexico"
-        ), use_container_width=True)
+        fig = px.bar(
+    x=metrics, y=nm_values.values,
+    labels={"x": "EJI Metric", "y": "RPL Value"},
+    title="EJI Metrics — New Mexico"
+)
+fig.update_layout(
+    yaxis=dict(
+        range=[0, 1],
+        dtick=0.25,
+        gridcolor="#E0E0E0",
+        showgrid=True
+    )
+)
+st.plotly_chart(fig, use_container_width=True)
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):

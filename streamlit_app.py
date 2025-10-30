@@ -95,9 +95,15 @@ else:
 col1, col2 = (st.columns(2) if compare_toggle else (st.container(), None))
 
 def plot_chart(df, label, color_shade=1.0):
-    """Generate a single EJI bar chart with color shading"""
-    values = [df[m].values[0] if m in df.columns else None for m in metrics]
-    colors = [base_colors[m] for m in metrics]
+    """Generate a single EJI bar chart with color shading and missing-value handling"""
+    values = []
+    for m in metrics:
+        if m in df.columns and pd.notna(df[m].values[0]):
+            values.append(float(df[m].values[0]))
+        else:
+            values.append(None)
+
+    colors = [base_colors.get(m, "#999999") for m in metrics]
 
     # Apply lightening for comparison dataset
     if color_shade < 1.0:
@@ -105,12 +111,19 @@ def plot_chart(df, label, color_shade=1.0):
 
     fig = go.Figure()
     for metric, val, color in zip(metrics, values, colors):
+        if val is not None:
+            hover_text = f"<b>{metric}</b><br>Score: {val:.2f}<extra></extra>"
+        else:
+            hover_text = f"<b>{metric}</b><br>No data available<extra></extra>"
+            color = "#D3D3D3"  # light gray for missing data
+            val = 0  # show as empty bar (height 0)
+
         fig.add_trace(go.Bar(
             x=[metric],
             y=[val],
             name=metric,
             marker_color=color,
-            hovertemplate=f"<b>{metric}</b><br>Score: {val:.2f}<extra></extra>"
+            hovertemplate=hover_text
         ))
 
     fig.update_layout(

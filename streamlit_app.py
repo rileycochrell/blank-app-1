@@ -27,9 +27,10 @@ def load_data():
         for df in [state_df, county_df]:
             # Drop unnamed or index columns
             df.drop(columns=[c for c in df.columns if "Unnamed" in c], inplace=True, errors="ignore")
-
-            # Drop 'Count' rows if they exist (case-insensitive)
-            df = df[~df.astype(str).apply(lambda x: x.str.contains("count", case=False, na=False)).any(axis=1)]
+            # Drop "Count" rows
+            df.drop(df[df.astype(str).apply(lambda x: x.str.contains("count", case=False, na=False)).any(axis=1)].index, inplace=True)
+            # Strip spaces from column names
+            df.columns = df.columns.str.strip()
 
         return state_df, county_df
     except Exception as e:
@@ -41,8 +42,7 @@ state_df, county_df = load_data()
 if state_df is None or county_df is None:
     st.stop()
 
-# --- Normalize column names (fix mismatch like 'County' vs 'COUNTY') ---
-county_df.columns = county_df.columns.str.strip()
+# --- Normalize column names ---
 if "County" not in county_df.columns and "COUNTY" in county_df.columns:
     county_df.rename(columns={"COUNTY": "County"}, inplace=True)
 
@@ -54,8 +54,13 @@ parameter1 = ["New Mexico", "County"]
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
-# --- Metrics list ---
-metrics = ["Mean_RPL_EJI", "Mean_RPL_EBM", "Mean_RPL_SVM", "Mean_RPL_HVM", "Mean_RPL_CBM"]
+# --- Detect metric columns dynamically ---
+metric_candidates = [c for c in state_df.columns if "RPL" in c.upper()]
+if not metric_candidates:
+    st.error("No metric columns found (expected columns with 'RPL' in their name).")
+    st.stop()
+
+metrics = metric_candidates  # use detected columns instead of hardcoding
 
 # --- Display data and visuals ---
 if selected_parameter == "County":
@@ -67,9 +72,7 @@ if selected_parameter == "County":
     else:
         st.success(f"Displaying data for **{selected_county}**.")
         st.subheader(f"📋 EJI Data for {selected_county}")
-
-        # Remove index column when displaying
-        st.dataframe(subset.reset_index(drop=True))
+        st.dataframe(subset, hide_index=True)  # ✅ hides the left numbering column
 
         # --- Bar chart ---
         county_means = subset[metrics].mean(numeric_only=True)
@@ -84,9 +87,7 @@ if selected_parameter == "County":
 else:
     st.success("Displaying statewide averages for **New Mexico**.")
     st.subheader("📋 New Mexico Statewide Averages")
-
-    # Remove index column when displaying
-    st.dataframe(state_df.reset_index(drop=True))
+    st.dataframe(state_df, hide_index=True)  # ✅ hides the left numbering column
 
     nm_means = state_df[metrics].mean(numeric_only=True)
     fig = px.bar(

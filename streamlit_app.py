@@ -34,7 +34,7 @@ if state_df is None or county_df is None:
     st.stop()
 
 # --- Define dropdown options ---
-counties = sorted(county_df["COUNTY"].dropna().unique())
+counties = sorted(county_df["County"].dropna().unique())
 parameter1 = ["New Mexico", "County"]
 
 # --- Selection ---

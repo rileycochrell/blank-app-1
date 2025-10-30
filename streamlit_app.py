@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import plotly.express as px
 
@@ -50,30 +50,44 @@ counties = sorted(county_df["County"].dropna().unique())
 states = sorted(state_df["State"].dropna().unique())
 parameter1 = ["New Mexico", "County"]
 
-# --- Main selection ---
-selected_parameter = st.selectbox("View EJI data for:", parameter1)
-st.write(f"**You selected:** {selected_parameter}")
+# --- Custom color palettes ---
+dataset1_colors = {
+    "RPL_EJI": "#911eb4",
+    "RPL_EBM": "#c55c29",
+    "RPL_SVM": "#4363d8",
+    "RPL_HVM": "#f032e6",
+    "RPL_CBM": "#469990",
+    "RPL_EJI_CBM": "#801650"
+}
+
+dataset2_colors = {
+    "RPL_EJI": "#b88be1",
+    "RPL_EBM": "#D2B48C",
+    "RPL_SVM": "#87a1e5",
+    "RPL_HVM": "#f79be9",
+    "RPL_CBM": "#94c9c4",
+    "RPL_EJI_CBM": "#f17cb0"
+}
 
 # --- Helper function to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Create comparison table (datasets as rows, metrics as columns) ---
-    compare_df = pd.DataFrame([list(data1.values), list(data2.values)], 
-                              index=[label1, label2], 
-                              columns=metrics)
+    compare_df = pd.DataFrame({
+        "Metric": metrics * 2,
+        "Score": list(data1.values) + list(data2.values),
+        "Dataset": [label1] * len(metrics) + [label2] * len(metrics)
+    })
 
-    # --- Display table ---
-    st.subheader("📊 Data Comparison Table")
-    st.dataframe(compare_df.style.format("{:.3f}"), hide_index=False)
+    # Assign colors
+    colors = []
+    for i, row in compare_df.iterrows():
+        if row["Dataset"] == label1:
+            colors.append(dataset1_colors[row["Metric"]])
+        else:
+            colors.append(dataset2_colors[row["Metric"]])
 
-    # --- Prepare data for grouped bar chart ---
-    plot_df = compare_df.reset_index().melt(id_vars="index", 
-                                            var_name="Metric", 
-                                            value_name="Score")
-    plot_df.rename(columns={"index": "Dataset"}, inplace=True)
-
-    # --- Grouped bar chart ---
+    # Create grouped bar chart
     fig = px.bar(
-        plot_df,
+        compare_df,
         x="Metric",
         y="Score",
         color="Dataset",
@@ -82,18 +96,31 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         labels={"Score": "RPL Value", "Metric": "Metric"},
     )
 
+    # Apply custom colors manually
+    for i, trace in enumerate(fig.data):
+        if trace.name == label1:
+            trace.marker.color = [dataset1_colors[m] for m in metrics]
+        else:
+            trace.marker.color = [dataset2_colors[m] for m in metrics]
+
     fig.update_layout(
-        yaxis=dict(
-            range=[0, 1],
-            dtick=0.25,
-            gridcolor="#E0E0E0",
-            showgrid=True
-        )
+        yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True)
     )
 
+    # --- Comparison Table ---
+    compare_table = pd.DataFrame({
+        "Metric": metrics,
+        label1: data1.values,
+        label2: data2.values
+    }).set_index("Metric").T  # switch rows/cols
+
     st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
 # --- MAIN DISPLAY ---
+selected_parameter = st.selectbox("View EJI data for:", parameter1)
+st.write(f"**You selected:** {selected_parameter}")
+
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
@@ -106,17 +133,16 @@ if selected_parameter == "County":
 
         county_values = subset[metrics].iloc[0]
         fig = px.bar(
-            x=metrics, y=county_values.values,
+            x=metrics,
+            y=county_values.values,
+            color=metrics,
+            color_discrete_map=dataset1_colors,
             labels={"x": "EJI Metric", "y": "RPL Value"},
             title=f"EJI Metrics — {selected_county}"
         )
         fig.update_layout(
-            yaxis=dict(
-                range=[0, 1],
-                dtick=0.25,
-                gridcolor="#E0E0E0",
-                showgrid=True
-            )
+            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -147,17 +173,16 @@ elif selected_parameter == "New Mexico":
 
         nm_values = nm_row[metrics].iloc[0]
         fig = px.bar(
-            x=metrics, y=nm_values.values,
+            x=metrics,
+            y=nm_values.values,
+            color=metrics,
+            color_discrete_map=dataset1_colors,
             labels={"x": "EJI Metric", "y": "RPL Value"},
             title="EJI Metrics — New Mexico"
         )
         fig.update_layout(
-            yaxis=dict(
-                range=[0, 1],
-                dtick=0.25,
-                gridcolor="#E0E0E0",
-                showgrid=True
-            )
+            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
 

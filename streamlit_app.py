@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 import plotly.express as px
-import plotly.graph_objects as go  # <-- required for custom bar charts
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
@@ -70,83 +70,79 @@ dataset2_colors = {
     "RPL_EJI_CBM": "#f17cb0"
 }
 
-# --- Helper function: comparison chart + table ---
+# --- Comparison plot helper ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    """Transposed comparison table + grouped bar chart with colored annotations."""
-
-    # --- Comparison table (datasets as rows) ---
+    # Table (datasets as rows)
     compare_table = pd.DataFrame({
         "Metric": metrics,
         label1: data1.values,
         label2: data2.values
     }).set_index("Metric").T
+
     st.subheader("📊 Data Comparison Table")
-    st.dataframe(compare_table.style.format("{:.3f}"), width='stretch')
+    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
-    # --- Prepare data ---
-    scores1 = list(data1.values)
-    scores2 = list(data2.values)
-
-    # --- Create grouped bar chart ---
+    # Bar chart setup
     fig = go.Figure()
 
     fig.add_trace(go.Bar(
         x=metrics,
-        y=scores1,
+        y=list(data1.values),
         name=label1,
         marker_color=[dataset1_colors[m] for m in metrics],
         offsetgroup=0,
         width=0.35,
-        hovertemplate="%{x}<br>" + f"{label1}: " + "%{y:.3f}<extra></extra>"
+        hovertemplate=f"{label1}: %{y:.3f}<extra></extra>"
     ))
 
     fig.add_trace(go.Bar(
         x=metrics,
-        y=scores2,
+        y=list(data2.values),
         name=label2,
         marker_color=[dataset2_colors[m] for m in metrics],
         offsetgroup=1,
         width=0.35,
-        hovertemplate="%{x}<br>" + f"{label2}: " + "%{y:.3f}<extra></extra>"
+        hovertemplate=f"{label2}: %{y:.3f}<extra></extra>"
     ))
 
+    # Layout
     fig.update_layout(
         barmode='group',
+        title=f"EJI Metric Comparison — {label1} vs {label2}",
         yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
         xaxis=dict(tickmode='array', tickvals=metrics, ticktext=metrics),
-        margin=dict(t=60, b=160),
-        title=f"EJI Metric Comparison — {label1} vs {label2}",
-        legend=dict(title_text="")
+        margin=dict(t=60, b=180),
+        showlegend=False
     )
 
-    # --- Custom annotations under each metric ---
+    # Add custom annotations below each bar group
     annotations = []
-    small_y1, small_y2, big_y = -0.12, -0.08, -0.20
-    for m in metrics:
+    for i, m in enumerate(metrics):
         annotations.append(dict(
-            x=m, y=small_y1, xref='x', yref='paper',
+            x=m, y=-0.08, xref='x', yref='paper',
             text=f"<b>{label1}</b>", showarrow=False,
             font=dict(size=10, color=dataset1_colors[m]),
-            xanchor='center', xshift=-40
+            xanchor='center', xshift=-35
         ))
         annotations.append(dict(
-            x=m, y=small_y2, xref='x', yref='paper',
+            x=m, y=-0.08, xref='x', yref='paper',
             text=f"<b>{label2}</b>", showarrow=False,
             font=dict(size=10, color=dataset2_colors[m]),
-            xanchor='center', xshift=40
+            xanchor='center', xshift=35
         ))
         annotations.append(dict(
-            x=m, y=big_y, xref='x', yref='paper',
-            text=f"<span style='font-size:13px'>{m}</span>",
-            showarrow=False, font=dict(size=12, color='#333333'),
+            x=m, y=-0.16, xref='x', yref='paper',
+            text=m, showarrow=False,
+            font=dict(size=12, color='black'),
             xanchor='center'
         ))
+
     fig.update_layout(annotations=annotations)
 
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
 
-# --- MAIN DISPLAY ---
+# --- Main Display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
@@ -173,9 +169,9 @@ if selected_parameter == "County":
             yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
             showlegend=False
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
 
-        # --- Comparison Option ---
+        # Comparison Option
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":
@@ -193,7 +189,6 @@ if selected_parameter == "County":
 
 elif selected_parameter == "New Mexico":
     nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
-
     if nm_row.empty:
         st.warning("No New Mexico data found in the state file.")
     else:
@@ -213,9 +208,9 @@ elif selected_parameter == "New Mexico":
             yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
             showlegend=False
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
 
-        # --- Comparison Option ---
+        # Comparison Option
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":

@@ -23,14 +23,15 @@ def load_data():
         state_df = pd.read_csv(state_url)
         county_df = pd.read_csv(county_url)
 
-        # 🧹 Clean both tables
-        for df in [state_df, county_df]:
-            # Drop unnamed or index columns
-            df.drop(columns=[c for c in df.columns if "Unnamed" in c], inplace=True, errors="ignore")
-            # Drop "Count" rows
-            df.drop(df[df.astype(str).apply(lambda x: x.str.contains("count", case=False, na=False)).any(axis=1)].index, inplace=True)
-            # Strip spaces from column names
-            df.columns = df.columns.str.strip()
+        # 🧹 Clean up any extra columns or rows
+        if "Count" in state_df.columns:
+            state_df = state_df[state_df["State"] != "Count"]
+        if "Count" in county_df.columns:
+            county_df = county_df[county_df["County"] != "Count"]
+
+        # Remove index column (just display clean)
+        state_df = state_df.reset_index(drop=True)
+        county_df = county_df.reset_index(drop=True)
 
         return state_df, county_df
     except Exception as e:
@@ -38,16 +39,9 @@ def load_data():
         return None, None
 
 state_df, county_df = load_data()
-st.subheader("🔍 Debug Info — Columns Detected")
-st.write("State CSV Columns:", list(state_df.columns))
-st.write("County CSV Columns:", list(county_df.columns))
 
 if state_df is None or county_df is None:
     st.stop()
-
-# --- Normalize column names ---
-if "County" not in county_df.columns and "COUNTY" in county_df.columns:
-    county_df.rename(columns={"COUNTY": "County"}, inplace=True)
 
 # --- Define dropdown options ---
 counties = sorted(county_df["County"].dropna().unique())
@@ -57,13 +51,8 @@ parameter1 = ["New Mexico", "County"]
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
-# --- Detect metric columns dynamically ---
-metric_candidates = [c for c in state_df.columns if "RPL" in c.upper()]
-if not metric_candidates:
-    st.error("No metric columns found (expected columns with 'RPL' in their name).")
-    st.stop()
-
-metrics = metric_candidates  # use detected columns instead of hardcoding
+# --- Define the metric columns actually in your data ---
+metrics = ["Mean_EJI", "Mean_EBM", "Mean_SVM", "Mean_HVM", "Mean_CBM", "Mean_EJI_CBM"]
 
 # --- Display data and visuals ---
 if selected_parameter == "County":
@@ -75,7 +64,7 @@ if selected_parameter == "County":
     else:
         st.success(f"Displaying data for **{selected_county}**.")
         st.subheader(f"📋 EJI Data for {selected_county}")
-        st.dataframe(subset, hide_index=True)  # ✅ hides the left numbering column
+        st.dataframe(subset, hide_index=True)
 
         # --- Bar chart ---
         county_means = subset[metrics].mean(numeric_only=True)
@@ -89,8 +78,9 @@ if selected_parameter == "County":
 
 else:
     st.success("Displaying statewide averages for **New Mexico**.")
+
     st.subheader("📋 New Mexico Statewide Averages")
-    st.dataframe(state_df, hide_index=True)  # ✅ hides the left numbering column
+    st.dataframe(state_df, hide_index=True)
 
     nm_means = state_df[metrics].mean(numeric_only=True)
     fig = px.bar(

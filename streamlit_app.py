@@ -42,7 +42,7 @@ selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
 # --- Display data and visuals ---
-metrics = ["mean_RPL_EJI", "mean_RPL_EBM", "mean_RPL_SVM", "mean_RPL_HVM", "mean_RPL_CBM"]
+metrics = ["Mean_RPL_EJI", "Mean_RPL_EBM", "Mean_RPL_SVM", "Mean_RPL_HVM", "Mean_RPL_CBM"]
 
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)

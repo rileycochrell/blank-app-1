@@ -147,19 +147,19 @@ elif selected_parameter == "New Mexico":
 
         nm_values = nm_row[metrics].iloc[0]
         fig = px.bar(
-    x=metrics, y=nm_values.values,
-    labels={"x": "EJI Metric", "y": "RPL Value"},
-    title="EJI Metrics — New Mexico"
-)
-fig.update_layout(
-    yaxis=dict(
-        range=[0, 1],
-        dtick=0.25,
-        gridcolor="#E0E0E0",
-        showgrid=True
-    )
-)
-st.plotly_chart(fig, use_container_width=True)
+            x=metrics, y=nm_values.values,
+            labels={"x": "EJI Metric", "y": "RPL Value"},
+            title="EJI Metrics — New Mexico"
+        )
+        fig.update_layout(
+            yaxis=dict(
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True
+            )
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):

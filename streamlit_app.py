@@ -1,6 +1,7 @@
-import streamlit as st 
+import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go  # <-- required for custom bar charts
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
@@ -69,14 +70,10 @@ dataset2_colors = {
     "RPL_EJI_CBM": "#f17cb0"
 }
 
-# --- Helper function to plot grouped comparison ---
+# --- Helper function: comparison chart + table ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    """
-    Shows: (1) transposed comparison table (datasets x metrics),
-           (2) grouped bar chart with per-metric per-dataset colors,
-           (3) annotations under each metric: left = label1, right = label2,
-              centered larger text = metric name.
-    """
+    """Transposed comparison table + grouped bar chart with colored annotations."""
+
     # --- Comparison table (datasets as rows) ---
     compare_table = pd.DataFrame({
         "Metric": metrics,
@@ -84,13 +81,13 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         label2: data2.values
     }).set_index("Metric").T
     st.subheader("📊 Data Comparison Table")
-    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
+    st.dataframe(compare_table.style.format("{:.3f}"), width='stretch')
 
-    # --- Prepare data for plotting (two traces: label1 and label2) ---
+    # --- Prepare data ---
     scores1 = list(data1.values)
     scores2 = list(data2.values)
 
-    # create bar chart with two traces, using per-metric colors
+    # --- Create grouped bar chart ---
     fig = go.Figure()
 
     fig.add_trace(go.Bar(
@@ -113,55 +110,40 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         hovertemplate="%{x}<br>" + f"{label2}: " + "%{y:.3f}<extra></extra>"
     ))
 
-    # --- Layout: fixed y axis, gridlines, no automatic legend (we use table) ---
     fig.update_layout(
         barmode='group',
         yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
         xaxis=dict(tickmode='array', tickvals=metrics, ticktext=metrics),
-        margin=dict(t=60, b=140),  # extra bottom margin for annotations
+        margin=dict(t=60, b=160),
         title=f"EJI Metric Comparison — {label1} vs {label2}",
-        legend=dict(title_text="")  # keep legend if you want; toggle as desired
+        legend=dict(title_text="")
     )
 
-    # --- Annotations beneath each metric ---
-    # We'll place two small labels per metric (left/right) and a larger centered metric name.
+    # --- Custom annotations under each metric ---
     annotations = []
-    # y positions in 'paper' coordinates (0 = bottom of plotting area, 1 = top).
-    # We'll put the dataset subtitles slightly below the axis (y = -0.12 & -0.08 paper coords),
-    # and the big metric label further below (y = -0.20).
-    small_y1 = -0.12
-    small_y2 = -0.08
-    big_y = -0.20
-
-    for i, m in enumerate(metrics):
-        # left small subtitle (dataset1)
+    small_y1, small_y2, big_y = -0.12, -0.08, -0.20
+    for m in metrics:
         annotations.append(dict(
             x=m, y=small_y1, xref='x', yref='paper',
             text=f"<b>{label1}</b>", showarrow=False,
             font=dict(size=10, color=dataset1_colors[m]),
-            xanchor='center', xshift=-40  # shift left so it sits under left bar
+            xanchor='center', xshift=-40
         ))
-        # right small subtitle (dataset2)
         annotations.append(dict(
             x=m, y=small_y2, xref='x', yref='paper',
             text=f"<b>{label2}</b>", showarrow=False,
             font=dict(size=10, color=dataset2_colors[m]),
-            xanchor='center', xshift=40  # shift right so it sits under right bar
+            xanchor='center', xshift=40
         ))
-        # centered metric label (larger)
         annotations.append(dict(
             x=m, y=big_y, xref='x', yref='paper',
-            text=f"<span style='font-size:13px'>{m}</span>", showarrow=False,
-            font=dict(size=12, color='#333333'),
+            text=f"<span style='font-size:13px'>{m}</span>",
+            showarrow=False, font=dict(size=12, color='#333333'),
             xanchor='center'
         ))
-
     fig.update_layout(annotations=annotations)
 
-    # Render the figure and the table
-    st.plotly_chart(fig, use_container_width=True)
-    # Table already shown above; optionally show again below:
-    # st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # --- MAIN DISPLAY ---
@@ -191,7 +173,7 @@ if selected_parameter == "County":
             yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
             showlegend=False
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):
@@ -231,7 +213,7 @@ elif selected_parameter == "New Mexico":
             yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
             showlegend=False
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):

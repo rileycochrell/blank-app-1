@@ -71,51 +71,98 @@ dataset2_colors = {
 
 # --- Helper function to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    compare_df = pd.DataFrame({
-        "Metric": metrics * 2,
-        "Score": list(data1.values) + list(data2.values),
-        "Dataset": [label1] * len(metrics) + [label2] * len(metrics)
-    })
-
-    # Assign colors
-    colors = []
-    for i, row in compare_df.iterrows():
-        if row["Dataset"] == label1:
-            colors.append(dataset1_colors[row["Metric"]])
-        else:
-            colors.append(dataset2_colors[row["Metric"]])
-
-    # Create grouped bar chart
-    fig = px.bar(
-        compare_df,
-        x="Metric",
-        y="Score",
-        color="Dataset",
-        barmode="group",
-        title=f"EJI Metric Comparison — {label1} vs {label2}",
-        labels={"Score": "RPL Value", "Metric": "Metric"},
-    )
-
-    # Apply custom colors manually
-    for i, trace in enumerate(fig.data):
-        if trace.name == label1:
-            trace.marker.color = [dataset1_colors[m] for m in metrics]
-        else:
-            trace.marker.color = [dataset2_colors[m] for m in metrics]
-
-    fig.update_layout(
-        yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True)
-    )
-
-    # --- Comparison Table ---
+    """
+    Shows: (1) transposed comparison table (datasets x metrics),
+           (2) grouped bar chart with per-metric per-dataset colors,
+           (3) annotations under each metric: left = label1, right = label2,
+              centered larger text = metric name.
+    """
+    # --- Comparison table (datasets as rows) ---
     compare_table = pd.DataFrame({
         "Metric": metrics,
         label1: data1.values,
         label2: data2.values
-    }).set_index("Metric").T  # switch rows/cols
-
-    st.plotly_chart(fig, use_container_width=True)
+    }).set_index("Metric").T
+    st.subheader("📊 Data Comparison Table")
     st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
+
+    # --- Prepare data for plotting (two traces: label1 and label2) ---
+    scores1 = list(data1.values)
+    scores2 = list(data2.values)
+
+    # create bar chart with two traces, using per-metric colors
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        x=metrics,
+        y=scores1,
+        name=label1,
+        marker_color=[dataset1_colors[m] for m in metrics],
+        offsetgroup=0,
+        width=0.35,
+        hovertemplate="%{x}<br>" + f"{label1}: " + "%{y:.3f}<extra></extra>"
+    ))
+
+    fig.add_trace(go.Bar(
+        x=metrics,
+        y=scores2,
+        name=label2,
+        marker_color=[dataset2_colors[m] for m in metrics],
+        offsetgroup=1,
+        width=0.35,
+        hovertemplate="%{x}<br>" + f"{label2}: " + "%{y:.3f}<extra></extra>"
+    ))
+
+    # --- Layout: fixed y axis, gridlines, no automatic legend (we use table) ---
+    fig.update_layout(
+        barmode='group',
+        yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+        xaxis=dict(tickmode='array', tickvals=metrics, ticktext=metrics),
+        margin=dict(t=60, b=140),  # extra bottom margin for annotations
+        title=f"EJI Metric Comparison — {label1} vs {label2}",
+        legend=dict(title_text="")  # keep legend if you want; toggle as desired
+    )
+
+    # --- Annotations beneath each metric ---
+    # We'll place two small labels per metric (left/right) and a larger centered metric name.
+    annotations = []
+    # y positions in 'paper' coordinates (0 = bottom of plotting area, 1 = top).
+    # We'll put the dataset subtitles slightly below the axis (y = -0.12 & -0.08 paper coords),
+    # and the big metric label further below (y = -0.20).
+    small_y1 = -0.12
+    small_y2 = -0.08
+    big_y = -0.20
+
+    for i, m in enumerate(metrics):
+        # left small subtitle (dataset1)
+        annotations.append(dict(
+            x=m, y=small_y1, xref='x', yref='paper',
+            text=f"<b>{label1}</b>", showarrow=False,
+            font=dict(size=10, color=dataset1_colors[m]),
+            xanchor='center', xshift=-40  # shift left so it sits under left bar
+        ))
+        # right small subtitle (dataset2)
+        annotations.append(dict(
+            x=m, y=small_y2, xref='x', yref='paper',
+            text=f"<b>{label2}</b>", showarrow=False,
+            font=dict(size=10, color=dataset2_colors[m]),
+            xanchor='center', xshift=40  # shift right so it sits under right bar
+        ))
+        # centered metric label (larger)
+        annotations.append(dict(
+            x=m, y=big_y, xref='x', yref='paper',
+            text=f"<span style='font-size:13px'>{m}</span>", showarrow=False,
+            font=dict(size=12, color='#333333'),
+            xanchor='center'
+        ))
+
+    fig.update_layout(annotations=annotations)
+
+    # Render the figure and the table
+    st.plotly_chart(fig, use_container_width=True)
+    # Table already shown above; optionally show again below:
+    # st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
+
 
 # --- MAIN DISPLAY ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)

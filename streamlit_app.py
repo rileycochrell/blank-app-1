@@ -1,25 +1,24 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
+import colorsys
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
 
-# --- Title and description ---
+# --- Title ---
 st.title("🌎 Environmental Justice Index Visualization (New Mexico)")
 st.write("""
 The **Environmental Justice Index (EJI)** measures cumulative environmental, social, and health burdens 
 in communities relative to others across the U.S.  
-Use the dropdowns below to explore data for **New Mexico** or specific **counties**, and optionally compare with another dataset.
+Use the dropdowns below to explore **New Mexico** data or compare it to another dataset.
 """)
 
-# --- Load data from GitHub ---
+# --- Load data ---
 @st.cache_data
 def load_data():
     state_url = "https://github.com/rileycochrell/blank-app-1/raw/refs/heads/main/EJI_StateAverages_RPL.csv"
     county_url = "https://github.com/rileycochrell/blank-app-1/raw/refs/heads/main/EJI_NewMexico_CountyMeans.csv"
-    
     try:
         state_df = pd.read_csv(state_url)
         county_df = pd.read_csv(county_url)
@@ -32,21 +31,17 @@ state_df, county_df = load_data()
 if state_df is None or county_df is None:
     st.stop()
 
-# --- Metric columns ---
-metrics = ["RPL_EJI", "RPL_EBM", "RPL_SVM", "RPL_HVM", "RPL_CBM"]
-
-# --- Color palette (based on CDC EJI map) ---
+# --- Color palette (based on CDC EJI color scheme) ---
 base_colors = {
     "RPL_EJI": "#009682",   # teal
     "RPL_EBM": "#007D3C",   # green
-    "RPL_SVM": "#0050A0",   # blue
-    "RPL_HVM": "#5A2A7E",   # purple
+    "RPL_SVM": "#5A2A7E",   # purple
+    "RPL_HVM": "#0050A0",   # blue
     "RPL_CBM": "#B2182B",   # red/orange
 }
 
 def lighten_color(hex_color, factor=0.5):
-    """Lighten a hex color by blending it with white"""
-    import colorsys
+    """Lighten a hex color by blending it with white."""
     hex_color = hex_color.lstrip('#')
     rgb = tuple(int(hex_color[i:i+2], 16)/255 for i in (0, 2, 4))
     h, l, s = colorsys.rgb_to_hls(*rgb)
@@ -54,29 +49,28 @@ def lighten_color(hex_color, factor=0.5):
     r, g, b = colorsys.hls_to_rgb(h, l, s)
     return f'#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}'
 
-# --- Dropdown selections ---
-parameter1 = ["New Mexico", "County"]
-selected_parameter = st.selectbox("View EJI data for:", parameter1)
+# --- Metric handling ---
+possible_metrics = ["RPL_EJI", "RPL_EBM", "RPL_SVM", "RPL_HVM", "RPL_CBM"]
 
+# --- Dropdowns ---
+view_type = st.selectbox("View EJI data for:", ["New Mexico", "County"])
 counties = sorted(county_df["County"].dropna().unique())
-selected_dataset = None
 
-if selected_parameter == "County":
+if view_type == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
     title_text = f"EJI Metrics — {selected_county}"
 else:
     subset = state_df[state_df["State"] == "New Mexico"]
-    title_text = "EJI Metrics — New Mexico Statewide"
+    title_text = "EJI Metrics — New Mexico (State Average)"
 
 if subset.empty:
     st.warning("No data found for your selection.")
     st.stop()
 
-# --- Comparison mode ---
+# --- Comparison toggle ---
 compare_toggle = st.toggle("🔄 Compare with another dataset?")
 if compare_toggle:
-    st.write("Choose a second dataset to compare with the first one.")
     compare_type = st.radio("Compare by:", ["State", "County"], horizontal=True)
     if compare_type == "County":
         compare_target = st.selectbox("Select comparison county:", counties)
@@ -91,52 +85,53 @@ else:
     compare_subset = None
     compare_label = None
 
-# --- Visualization Section ---
-col1, col2 = (st.columns(2) if compare_toggle else (st.container(), None))
-
+# --- Plot function ---
 def plot_chart(df, label, color_shade=1.0):
-    """Generate a single EJI bar chart with color shading and missing-value handling"""
+    # Identify which metric columns exist in the dataset
+    cols = [c for c in df.columns if any(m in c for m in possible_metrics)]
+    metrics_found = [m for m in possible_metrics if any(m in c for c in cols)]
+
     values = []
-    for m in metrics:
-        if m in df.columns and pd.notna(df[m].values[0]):
-            values.append(float(df[m].values[0]))
+    for m in metrics_found:
+        col = next((c for c in df.columns if m in c), None)
+        if col and pd.notna(df[col].values[0]):
+            values.append(float(df[col].values[0]))
         else:
             values.append(None)
 
-    colors = [base_colors.get(m, "#999999") for m in metrics]
-
-    # Apply lightening for comparison dataset
+    colors = [base_colors[m] for m in metrics_found]
     if color_shade < 1.0:
         colors = [lighten_color(c, factor=color_shade) for c in colors]
 
     fig = go.Figure()
-    for metric, val, color in zip(metrics, values, colors):
-        if val is not None:
-            hover_text = f"<b>{metric}</b><br>Score: {val:.2f}<extra></extra>"
-        else:
-            hover_text = f"<b>{metric}</b><br>No data available<extra></extra>"
-            color = "#D3D3D3"  # light gray for missing data
-            val = 0  # show as empty bar (height 0)
-
+    for metric, val, color in zip(metrics_found, values, colors):
+        hover_text = (
+            f"<b>{metric}</b><br>Score: {val:.2f}<extra></extra>"
+            if val is not None
+            else f"<b>{metric}</b><br>No data<extra></extra>"
+        )
         fig.add_trace(go.Bar(
             x=[metric],
-            y=[val],
+            y=[val if val is not None else 0],
+            marker_color=color if val is not None else "#D3D3D3",
+            hovertemplate=hover_text,
             name=metric,
-            marker_color=color,
-            hovertemplate=hover_text
         ))
 
     fig.update_layout(
         title=label,
-        xaxis_title="EJI Metric",
         yaxis_title="Percentile Rank (0–1)",
         yaxis=dict(range=[0, 1]),
-        showlegend=False,
+        xaxis_title="EJI Metric",
         height=450,
+        showlegend=False,
+        margin=dict(t=50, l=40, r=20, b=40)
     )
     return fig
 
-# --- Display charts ---
+# --- Layout ---
+col1, col2 = (st.columns(2) if compare_toggle else (st.container(), None))
+
 with col1:
     st.subheader(f"📊 {title_text}")
     st.plotly_chart(plot_chart(subset, title_text), use_container_width=True)
@@ -148,18 +143,27 @@ if compare_toggle and compare_subset is not None and not compare_subset.empty:
         st.plotly_chart(plot_chart(compare_subset, f"{compare_label}", color_shade=0.45), use_container_width=True)
         st.dataframe(compare_subset.style.highlight_max(axis=1, color="#E2D9F3"))
 
-# --- Legend Section ---
+# --- Legend ---
 st.markdown("---")
-st.subheader("📈 EJI Percentile Scale")
+st.subheader("📈 EJI Percentile Scale and Color Key")
+st.markdown("""
+| Metric | Meaning | Color |
+|:--------|:---------|:-------|
+| **RPL_EJI** | Overall Environmental Justice Index | 🟩 Teal |
+| **RPL_EBM** | Environmental Burden Metric | 🟢 Green |
+| **RPL_SVM** | Social Vulnerability Metric | 🟣 Purple |
+| **RPL_HVM** | Health Vulnerability Metric | 🔵 Blue |
+| **RPL_CBM** | Cumulative Burden Metric | 🔴 Red/Orange |
+""")
 
 st.markdown("""
-| Range | Classification | Color Meaning |
-|:------|:----------------|:---------------|
-| ⬜ No data | — | — |
+| Percentile Range | Classification | Implication |
+|:-----------------|:----------------|:-------------|
 | 🟢 0.00–0.25 | Low | Least cumulative burden |
 | 🟡 0.25–0.50 | Low–Moderate | Some burden |
 | 🟠 0.50–0.75 | Moderate–High | Elevated burden |
 | 🔴 0.75–1.00 | High | Greatest cumulative burden |
+| ⚪ No data | — | — |
 """)
 
 # --- Footer ---

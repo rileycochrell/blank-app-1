@@ -41,6 +41,6 @@ if selected_perameter1 == "County":
 
 	
 	
-else: selected_parameter1 == "New Mexico":
+else: selected_parameter1 == "New Mexico"
 	st.write("hi")
 	

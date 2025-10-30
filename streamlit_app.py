@@ -17,7 +17,7 @@ Use the dropdowns below to explore data for **New Mexico** or specific **countie
 @st.cache_data
 def load_data():
     state_url = "https://raw.githubusercontent.com/rileycochrell/idktrying/main/NewMexicoEJI.csv"
-    county_url = "https://raw.githubusercontent.com/rileycochrell/idktrying/main/CountyEJI.csv"
+    county_url = "https://github.com/rileycochrell/blank-app-1/raw/refs/heads/main/EJI_NewMexico_CountyMeans.csv"
     usa_url = "https://raw.githubusercontent.com/rileycochrell/idktrying/main/USA_EJI.csv"
     
     try:

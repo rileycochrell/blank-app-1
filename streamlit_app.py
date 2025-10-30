@@ -77,20 +77,24 @@ if selected_parameter == "County":
         st.plotly_chart(fig, use_container_width=True)
 
 else:
-    st.success("Displaying statewide averages for **New Mexico**.")
+    st.success("Displaying statewide data for **New Mexico**.")
 
-    st.subheader("📋 New Mexico Statewide Averages")
-    st.dataframe(state_df, hide_index=True)
+    # Filter only New Mexico row
+    nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
 
-    nm_means = state_df[metrics].mean(numeric_only=True)
-    fig = px.bar(
-        x=metrics,
-        y=nm_means.values,
-        labels={"x": "EJI Metric", "y": "Mean Value"},
-        title="EJI Metrics — New Mexico Statewide Averages"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    if nm_row.empty:
+        st.warning("No New Mexico data found in the state file.")
+    else:
+        st.subheader("📋 New Mexico Statewide EJI Scores")
+        st.dataframe(nm_row, hide_index=True)
 
-# --- Footer ---
-st.divider()
-st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")
+        # Plot New Mexico’s values only (no averaging)
+        nm_values = nm_row[metrics].iloc[0]
+
+        fig = px.bar(
+            x=metrics,
+            y=nm_values.values,
+            labels={"x": "EJI Metric", "y": "Score"},
+            title="EJI Metrics — New Mexico"
+        )
+        st.plotly_chart(fig, use_container_width=True)

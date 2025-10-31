@@ -148,14 +148,14 @@ def plot_comparison(data1, data2, label1, label2, metrics):
             dtick=0.25,
             gridcolor="#E0E0E0",
             showgrid=True,
-            titlefont=dict(color="black")
+            title=dict(font=dict(color="black"))
         ),
         xaxis=dict(
             title="Environmental Justice Index Modules",
             tickmode='array',
             tickvals=[pretty.get(m, m) for m in metrics],
             ticktext=[pretty.get(m, m) for m in metrics],
-            titlefont=dict(color="black")
+            title=dict(font=dict(color="black"))
         ),
         margin=dict(t=60, b=100),
         showlegend=False
@@ -187,8 +187,14 @@ if selected_parameter == "County":
             title=f"EJI Metrics — {selected_county}"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True, titlefont=dict(color="black")),
-            xaxis=dict(titlefont=dict(color="black")),
+            yaxis=dict(
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True,
+                title=dict(font=dict(color="black"))
+            ),
+            xaxis=dict(title=dict(font=dict(color="black"))),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -227,8 +233,14 @@ elif selected_parameter == "New Mexico":
             title="EJI Metrics — New Mexico"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True, titlefont=dict(color="black")),
-            xaxis=dict(titlefont=dict(color="black")),
+            yaxis=dict(
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True,
+                title=dict(font=dict(color="black"))
+            ),
+            xaxis=dict(title=dict(font=dict(color="black"))),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)

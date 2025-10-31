@@ -1,13 +1,12 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
 st.set_page_config(
     page_title="Environmental Justice Index (EJI) — New Mexico",
     page_icon="🏡",
 )
 st.sidebar.title("🏡 Home")
-
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
 

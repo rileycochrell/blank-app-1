@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")

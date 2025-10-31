@@ -78,36 +78,6 @@ def get_contrast_color(hex_color):
     brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
     return "black" if brightness > 150 else "white"
 
-# --- colored header table helper ---
-def display_colored_table(df, color_map, pretty_map):
-    """Display dataframe with colored headers matching the chart colors."""
-    if isinstance(df, pd.Series):
-        df = df.to_frame().T
-
-    df = df.rename(columns=pretty_map)
-
-    # Safe numeric formatting
-    def safe_format(x):
-        if isinstance(x, (int, float)):
-            return f"{x:.3f}"
-        return str(x)
-
-    df = df.applymap(safe_format)
-
-    # Apply color styling to headers
-    def highlight_headers(col):
-        inv_map = {v: k for k, v in pretty_map.items()}
-        key = inv_map.get(col, None)
-        if key and key in color_map:
-            bg = color_map[key]
-            fg = get_contrast_color(bg)
-            return [f"background-color: {bg}; color: {fg}; font-weight: bold; text-align: center;"] * len(df)
-        return [""] * len(df)
-
-    styled = df.style.apply(highlight_headers, axis=0)
-    st.dataframe(styled, width='stretch')
-
-# --- chart functions ---
 def plot_comparison(data1, data2, label1, label2, metrics):
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
@@ -116,9 +86,10 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     }).set_index("Metric").T
 
     st.subheader("📊 Data Comparison Table")
-    display_colored_table(compare_table.reset_index(), dataset1_colors, pretty)
+    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
     fig = go.Figure()
+
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data1.values),
@@ -134,6 +105,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         ),
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
+
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data2.values),
@@ -149,6 +121,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         ),
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
+
     fig.update_layout(
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
@@ -168,7 +141,11 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         margin=dict(t=60, b=100),
         showlegend=False
     )
+
     st.plotly_chart(fig, use_container_width=True)
+
+selected_parameter = st.selectbox("View EJI data for:", parameter1)
+st.write(f"**You selected:** {selected_parameter}")
 
 def plot_single_chart(title, data_values):
     fig = px.bar(
@@ -179,6 +156,7 @@ def plot_single_chart(title, data_values):
         labels={"x": "Environmental Justice Index Metric", "y": "Percentile Rank Value"},
         title=title
     )
+
     fig.update_layout(
         yaxis=dict(
             title=dict(text="Percentile Rank Value", font=dict(color="black")),
@@ -198,18 +176,16 @@ def plot_single_chart(title, data_values):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MAIN ---
-selected_parameter = st.selectbox("View EJI data for:", parameter1)
-st.write(f"**You selected:** {selected_parameter}")
-
+# --- MAIN CONTENT ---
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
+
     if subset.empty:
         st.warning(f"No data found for {selected_county}.")
     else:
         st.subheader(f"📋 EJI Data for {selected_county}")
-        display_colored_table(subset, dataset1_colors, pretty)
+        st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
         plot_single_chart(f"EJI Metrics — {selected_county}", county_values)
@@ -235,7 +211,10 @@ elif selected_parameter == "New Mexico":
         st.warning("No New Mexico data found in the state file.")
     else:
         st.subheader("📋 New Mexico Statewide EJI Scores")
-        display_colored_table(nm_row, dataset1_colors, pretty)
+
+        # Use pretty labels in the table
+        pretty_nm = nm_row.rename(columns=pretty)
+        st.dataframe(pretty_nm, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
         plot_single_chart("EJI Metrics — New Mexico", nm_values)
@@ -257,4 +236,3 @@ elif selected_parameter == "New Mexico":
 
 st.divider()
 st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")
-

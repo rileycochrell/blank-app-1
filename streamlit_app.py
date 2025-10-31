@@ -6,6 +6,11 @@ import plotly.express as px
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
 
 st.title("🌎 Environmental Justice Index Visualization (New Mexico)")
+st.info("""
+**Interpreting the EJI Score:**
+Lower EJI values (closer to 0) indicate **lower cumulative environmental and social burdens** — generally a *good* outcome.
+Higher EJI values (closer to 1) indicate **higher cumulative burdens and vulnerabilities** — generally a *worse* outcome.
+""")
 st.write("""
 The **Environmental Justice Index (EJI)** measures cumulative environmental, social, and health burdens 
 in communities relative to others across the U.S.  

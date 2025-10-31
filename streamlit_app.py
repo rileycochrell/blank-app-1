@@ -1,3 +1,3 @@
-import 🏡_Home
+import Home
 
-🏡_Home.main()
+Home.main()

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+import numpy as np
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
@@ -72,9 +73,19 @@ dataset2_colors = {
 
 # --- Comparison plot helper ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # Table (datasets as rows)
+    # --- Pretty labels ---
+    pretty = {
+        "RPL_EJI": "Overall EJI",
+        "RPL_EBM": "Environmental Burden",
+        "RPL_SVM": "Social Vulnerability",
+        "RVL_HVM": "Health Vulnerability",
+        "RPL_CBM": "Climate Burden",
+        "RPL_EJI_CBM": "EJI + Climate Burden"
+    }
+
+    # --- Table (datasets as rows) ---
     compare_table = pd.DataFrame({
-        "Metric": metrics,
+        "Metric": [pretty.get(m, m) for m in metrics],
         label1: data1.values,
         label2: data2.values
     }).set_index("Metric").T
@@ -82,53 +93,67 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     st.subheader("📊 Data Comparison Table")
     st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
-    # Bar chart setup
+    # --- Contrast-aware text color helper ---
+    def get_contrast_color(hex_color):
+        rgb = tuple(int(hex_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
+        brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
+        return "black" if brightness > 150 else "white"
+
+    # --- Bar chart setup ---
     fig = go.Figure()
 
     # --- First dataset bars ---
     fig.add_trace(go.Bar(
-        x=metrics,
+        x=[pretty.get(m, m) for m in metrics],
         y=list(data1.values),
         name=label1,
         marker_color=[dataset1_colors[m] for m in metrics],
         offsetgroup=0,
         width=0.35,
-        text=[f"{label1}" for _ in metrics],
+        text=[label1 for _ in metrics],
         textposition="inside",
-        textfont=dict(color="white", size=10),
+        textangle=0,  # change to 90 if you want rotated labels
+        textfont=dict(
+            color=[get_contrast_color(dataset1_colors[m]) for m in metrics],
+            size=10
+        ),
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
 
     # --- Second dataset bars ---
     fig.add_trace(go.Bar(
-        x=metrics,
+        x=[pretty.get(m, m) for m in metrics],
         y=list(data2.values),
         name=label2,
         marker_color=[dataset2_colors[m] for m in metrics],
         offsetgroup=1,
         width=0.35,
-        text=[f"{label2}" for _ in metrics],
+        text=[label2 for _ in metrics],
         textposition="inside",
-        textfont=dict(color="white", size=10),
+        textangle=0,  # 90 if you want rotated labels
+        textfont=dict(
+            color=[get_contrast_color(dataset2_colors[m]) for m in metrics],
+            size=10
+        ),
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # --- Layout ---
+    # --- Layout tweaks ---
     fig.update_layout(
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
         yaxis=dict(
-            title="RPL Value",
+            title="Percentile Rank Value",
             range=[0, 1],
             dtick=0.25,
             gridcolor="#E0E0E0",
             showgrid=True
         ),
         xaxis=dict(
-            title="EJI Metric",
+            title="Environmental Justice Index Modules",
             tickmode='array',
-            tickvals=metrics,
-            ticktext=metrics
+            tickvals=[pretty.get(m, m) for m in metrics],
+            ticktext=[pretty.get(m, m) for m in metrics]
         ),
         margin=dict(t=60, b=100),
         showlegend=False

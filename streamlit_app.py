@@ -81,66 +81,45 @@ def get_contrast_color(hex_color):
 
 # --- improved colored table ---
 def display_colored_table(df, color_map, pretty_map):
-    """Display dataframe with colored headers and black-bordered cells."""
+    """
+    Display a DataFrame in Streamlit with:
+    - Colored columns according to color_map
+    - Contrast text color
+    - Centered text
+    """
     if isinstance(df, pd.Series):
         df = df.to_frame().T
 
-    df = df.rename(columns=pretty_map)
+    # Map column names for display
+    df_display = df.rename(columns=pretty_map)
 
-    # format numbers safelydef display_colored_table(df, color_map, pretty_map):
-    """Display dataframe with colored headers and black-bordered cells."""
-    if isinstance(df, pd.Series):
-        df = df.to_frame().T
+    # Format numbers safely
+    df_display = df_display.applymap(lambda x: f"{float(x):.3f}" if pd.notnull(x) else "")
 
-    # Map column names to pretty names first, then use original names for color lookup
-    original_cols = df.columns.tolist()
-    df = df.rename(columns=pretty_map)
-    mapped_cols = df.columns.tolist()
+    # Create a Pandas Styler
+    styler = df_display.style
 
-    # format numbers safely
-    def safe_format(x):
-        try:
-            return f"{float(x):.3f}"
-        except Exception:
-            return str(x)
+    # Apply per-column colors and text alignment
+    for col in df_display.columns:
+        # Reverse pretty_map to find original key for color
+        original_col = [k for k, v in pretty_map.items() if v == col]
+        if original_col:
+            col_color = color_map.get(original_col[0], "#FFFFFF")
+            # Contrast text color
+            rgb = tuple(int(col_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
+            brightness = (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2])
+            text_color = "black" if brightness > 150 else "white"
+            # Apply header style
+            styler = styler.set_table_styles([{
+                "selector": f"th.col{df_display.columns.get_loc(col)}",
+                "props": [("background-color", col_color),
+                          ("color", text_color),
+                          ("text-align", "center")]
+            }])
+            # Apply cell alignment
+            styler = styler.set_properties(subset=[col], **{"text-align": "center"})
 
-    df = df.applymap(safe_format)
-    
-    header_styles = []
-    # Create specific styles for each column header using its mapped name
-    for i, col in enumerate(mapped_cols):
-        # Find the original key for the color map
-        inv_map = {v: k for k, v in pretty_map.items()}
-        original_key = inv_map.get(col)
-        
-        # Use 'Metric' as a special case for the first column if present (comparison table)
-        if col == 'index' or col == 'Metric': 
-             color = '#f2f2f2'
-             text_color = 'black'
-        else:
-            color = color_map.get(original_key, '#FFFFFF')
-            text_color = get_contrast_color(color)
-        
-        # Target the header cell with CSS selector
-        header_styles.append({
-            "selector": f"th:nth-child({i + 2})", # nth-child index is 1-based, first child is usually a blank th or the row index
-            "props": [
-                (f"background-color", f"{color}"),
-                (f"color", f"{text_color}"),
-                (f"text-align", f"center"),
-                (f"font-weight", f"bold"),
-                (f"border", f"1px solid black")
-            ]
-        })
-
-    body_styles = [
-        {"selector": "td", "props": [("text-align", "center"), ("border", "1px solid black")]},
-        {"selector": "th.row_heading, th:first-child", "props": [("background-color", "#f2f2f2"), ("border", "1px solid black")]},
-        {"selector": "table", "props": [("border-collapse", "collapse"), ("border", "2px solid black")]}
-    ]
-
-    styled = df.style.set_table_styles(header_styles + body_styles)
-    st.dataframe(styled, use_container_width=True) # use_container_width instead of width='stretch'
+    st.dataframe(styler, use_container_width=True)
 
 # --- comparison plot ---
 def plot_comparison(data1, data2, label1, label2, metrics):

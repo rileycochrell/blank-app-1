@@ -85,6 +85,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     # Bar chart setup
     fig = go.Figure()
 
+    # --- First dataset bars ---
     fig.add_trace(go.Bar(
         x=metrics,
         y=list(data1.values),
@@ -92,9 +93,13 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         marker_color=[dataset1_colors[m] for m in metrics],
         offsetgroup=0,
         width=0.35,
+        text=[f"{label1}" for _ in metrics],
+        textposition="inside",
+        textfont=dict(color="white", size=10),
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
 
+    # --- Second dataset bars ---
     fig.add_trace(go.Bar(
         x=metrics,
         y=list(data2.values),
@@ -102,45 +107,34 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         marker_color=[dataset2_colors[m] for m in metrics],
         offsetgroup=1,
         width=0.35,
+        text=[f"{label2}" for _ in metrics],
+        textposition="inside",
+        textfont=dict(color="white", size=10),
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # Layout
+    # --- Layout ---
     fig.update_layout(
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
-        yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
-        xaxis=dict(tickmode='array', tickvals=metrics, ticktext=metrics),
-        margin=dict(t=60, b=180),
+        yaxis=dict(
+            title="RPL Value",
+            range=[0, 1],
+            dtick=0.25,
+            gridcolor="#E0E0E0",
+            showgrid=True
+        ),
+        xaxis=dict(
+            title="EJI Metric",
+            tickmode='array',
+            tickvals=metrics,
+            ticktext=metrics
+        ),
+        margin=dict(t=60, b=100),
         showlegend=False
     )
 
-    # Add custom annotations below each bar group
-    annotations = []
-    for i, m in enumerate(metrics):
-        annotations.append(dict(
-            x=m, y=-0.08, xref='x', yref='paper',
-            text=f"<b>{label1}</b>", showarrow=False,
-            font=dict(size=10, color=dataset1_colors[m]),
-            xanchor='center', xshift=-35
-        ))
-        annotations.append(dict(
-            x=m, y=-0.08, xref='x', yref='paper',
-            text=f"<b>{label2}</b>", showarrow=False,
-            font=dict(size=10, color=dataset2_colors[m]),
-            xanchor='center', xshift=35
-        ))
-        annotations.append(dict(
-            x=m, y=-0.16, xref='x', yref='paper',
-            text=m, showarrow=False,
-            font=dict(size=12, color='black'),
-            xanchor='center'
-        ))
-
-    fig.update_layout(annotations=annotations)
-
     st.plotly_chart(fig, use_container_width=True)
-
 
 # --- Main Display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)

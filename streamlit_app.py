@@ -88,13 +88,14 @@ def get_contrast_color(hex_color):
 
 # --- CUSTOM COLORED TABLE FUNCTION (HTML RENDERING) ---
 def display_colored_table_html(df, color_map, pretty_map, title=None):
-    """Render a DataFrame with colored column headers in Streamlit using raw HTML."""
+    """Render a DataFrame with colored column headers in Streamlit using raw HTML, 
+    and highlight rows with 'Very High Concern' or values >= 0.76."""
     if isinstance(df, pd.Series):
         df = df.to_frame().T
 
     df_display = df.rename(columns=pretty_map)
 
-    # Only format numeric values safely
+    # Format numeric values safely
     df_display = df_display.applymap(
         lambda x: f"{x:.3f}" if isinstance(x, (int, float)) else x
     )
@@ -113,10 +114,17 @@ def display_colored_table_html(df, color_map, pretty_map, title=None):
         header_html += f'<th style="background-color:{color};color:{text_color};padding:6px;text-align:center;">{col}</th>'
     header_html += "</tr>"
 
-    # Build table body
+    # --- Build table body with conditional highlighting ---
     body_html = ""
     for _, row in df_display.iterrows():
-        body_html += "<tr>"
+        # Check if the row qualifies as "Very High" (EJI >= 0.76 or text match)
+        is_very_high = any(
+            (isinstance(val, str) and "very high" in val.lower()) or
+            (isinstance(val, (int, float)) and float(val) >= 0.76)
+            for val in row
+        )
+        row_bg = "background-color:#ffb3b3;" if is_very_high else ""
+        body_html += f"<tr style='{row_bg}'>"
         for val in row:
             body_html += f"<td style='text-align:center;padding:4px;border:1px solid #ccc'>{val}</td>"
         body_html += "</tr>"
@@ -129,6 +137,7 @@ def display_colored_table_html(df, color_map, pretty_map, title=None):
     """
 
     st.markdown(table_html, unsafe_allow_html=True)
+
 
 # --- COMPARISON PLOT ---
 def plot_comparison(data1, data2, label1, label2, metrics):

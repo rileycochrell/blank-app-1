@@ -281,3 +281,5 @@ elif selected_parameter == "New Mexico":
 
 st.divider()
 st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")
+if __name__ == "__main__":
+    main()

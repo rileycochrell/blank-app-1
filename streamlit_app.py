@@ -124,6 +124,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     }).set_index("Metric").T
 
     st.subheader("📊 Data Comparison Table")
+    # Pass compare_table as a dataframe for display_colored_table
     display_colored_table(compare_table.reset_index(), dataset1_colors, pretty)
 
     fig = go.Figure()
@@ -237,38 +238,42 @@ if selected_parameter == "County":
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
                     plot_comparison(county_values, comp_values, selected_county, comp_state, metrics)
-            else:
-                comp_county = st.selectbox("Select county:", [c for c in counties if c != selected_county])
-                comp_row = county_df[county_df["County"] == comp_county]
-                if not comp_row.empty:
-                    comp_values = comp_row[metrics].iloc[0]
-                    plot_comparison(county_values, comp_values, selected_county, comp_county, metrics)
-
-elif selected_parameter == "New Mexico":
-    nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
-    if nm_row.empty:
-        st.warning("No New Mexico data found in the state file.")
-    else:
-        st.subheader("📋 New Mexico Statewide EJI Scores")
-        display_colored_table(nm_row, dataset1_colors, pretty)
-
-        nm_values = nm_row[metrics].iloc[0]
-        plot_single_chart("EJI Metrics — New Mexico", nm_values)
-
-        if st.checkbox("Compare with another dataset"):
-            compare_type = st.radio("Compare with:", ["State", "County"])
-            if compare_type == "State":
-                comp_state = st.selectbox("Select state:", [s for s in states if s.lower() != "new mexico"])
-                comp_row = state_df[state_df["State"] == comp_state]
-                if not comp_row.empty:
-                    comp_values = comp_row[metrics].iloc[0]
-                    plot_comparison(nm_values, comp_values, "New Mexico", comp_state, metrics)
+                else:
+                    st.warning(f"No state data found for {comp_state}.")
             else:
                 comp_county = st.selectbox("Select county:", counties)
                 comp_row = county_df[county_df["County"] == comp_county]
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
-                    plot_comparison(nm_values, comp_values, "New Mexico", comp_county, metrics)
+                    plot_comparison(county_values, comp_values, selected_county, comp_county, metrics)
+                else:
+                    st.warning(f"No county data found for {comp_county}.")
 
-st.divider()
-st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")
+else: # For selected_parameter == "New Mexico" (State level)
+    subset = state_df[state_df["State"] == "New Mexico"]
+    if subset.empty:
+        st.warning("No data found for New Mexico.")
+    else:
+        st.subheader("📋 EJI Data for New Mexico (State Average)")
+        display_colored_table(subset, dataset1_colors, pretty)
+        state_values = subset[metrics].iloc[0]
+        plot_single_chart("EJI Metrics — New Mexico (State Average)", state_values)
+
+        if st.checkbox("Compare with another dataset"):
+            compare_type = st.radio("Compare with:", ["State", "County"])
+            if compare_type == "State":
+                comp_state = st.selectbox("Select state:", states)
+                comp_row = state_df[state_df["State"] == comp_state]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(state_values, comp_values, "New Mexico", comp_state, metrics)
+                else:
+                    st.warning(f"No state data found for {comp_state}.")
+            else:
+                comp_county = st.selectbox("Select county:", counties)
+                comp_row = county_df[county_df["County"] == comp_county]
+                if not comp_row.empty:
+                    comp_values = comp_row[metrics].iloc[0]
+                    plot_comparison(state_values, comp_values, "New Mexico", comp_county, metrics)
+                else:
+                    st.warning(f"No county data found for {comp_county}.")

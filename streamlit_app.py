@@ -1,3 +1,0 @@
-import Home
-
-Home.main()

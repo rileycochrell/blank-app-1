@@ -133,7 +133,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
             showgrid=True
         ),
         xaxis=dict(
-            title=dict(text="Environmental Justice Index Modules", font=dict(color="black")),
+            title=dict(text="Environmental Justice Index Metric", font=dict(color="black")),
             tickmode='array',
             tickvals=[pretty.get(m, m) for m in metrics],
             ticktext=[pretty.get(m, m) for m in metrics]
@@ -153,7 +153,7 @@ def plot_single_chart(title, data_values):
         y=data_values.values,
         color=metrics,
         color_discrete_map=dataset1_colors,
-        labels={"x": "EJI Metric", "y": "Percentile Rank Value"},
+        labels={"x": "Environmental Justice Index Metric", "y": "Percentile Rank Value"},
         title=title
     )
 
@@ -166,7 +166,7 @@ def plot_single_chart(title, data_values):
             showgrid=True
         ),
         xaxis=dict(
-            title=dict(text="Environmental Justice Index Modules", font=dict(color="black")),
+            title=dict(text="Environmental Justice Index Metric", font=dict(color="black")),
             tickmode='array',
             tickvals=[pretty.get(m, m) for m in metrics],
             ticktext=[pretty.get(m, m) for m in metrics]
@@ -211,7 +211,10 @@ elif selected_parameter == "New Mexico":
         st.warning("No New Mexico data found in the state file.")
     else:
         st.subheader("📋 New Mexico Statewide EJI Scores")
-        st.dataframe(nm_row, hide_index=True)
+
+        # Use pretty labels in the table
+        pretty_nm = nm_row.rename(columns=pretty)
+        st.dataframe(pretty_nm, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
         plot_single_chart("EJI Metrics — New Mexico", nm_values)

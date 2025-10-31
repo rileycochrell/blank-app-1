@@ -52,6 +52,16 @@ counties = sorted(county_df["County"].dropna().unique())
 states = sorted(state_df["State"].dropna().unique())
 parameter1 = ["New Mexico", "County"]
 
+# --- Pretty labels ---
+pretty = {
+    "RPL_EJI": "Overall EJI",
+    "RPL_EBM": "Environmental Burden",
+    "RPL_SVM": "Social Vulnerability",
+    "RPL_HVM": "Health Vulnerability",
+    "RPL_CBM": "Climate Burden",
+    "RPL_EJI_CBM": "EJI + Climate Burden"
+}
+
 # --- Custom color palettes ---
 dataset1_colors = {
     "RPL_EJI": "#911eb4",
@@ -73,16 +83,6 @@ dataset2_colors = {
 
 # --- Comparison plot helper ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Pretty labels ---
-    pretty = {
-        "RPL_EJI": "Overall EJI",
-        "RPL_EBM": "Environmental Burden",
-        "RPL_SVM": "Social Vulnerability",
-        "RPL_HVM": "Health Vulnerability",
-        "RPL_CBM": "Climate Burden",
-        "RPL_EJI_CBM": "EJI + Climate Burden"
-    }
-
     # --- Table (datasets as rows) ---
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
@@ -143,24 +143,25 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
         yaxis=dict(
-            title=dict(text="Percentile Rank Value", font=dict(color="black")),
+            title="Percentile Rank Value",
             range=[0, 1],
             dtick=0.25,
             gridcolor="#E0E0E0",
-            showgrid=True
+            showgrid=True,
+            titlefont=dict(color="black")
         ),
         xaxis=dict(
-            title=dict(text="Environmental Justice Index Modules", font=dict(color="black")),
+            title="Environmental Justice Index Modules",
             tickmode='array',
             tickvals=[pretty.get(m, m) for m in metrics],
-            ticktext=[pretty.get(m, m) for m in metrics]
+            ticktext=[pretty.get(m, m) for m in metrics],
+            titlefont=dict(color="black")
         ),
         margin=dict(t=60, b=100),
         showlegend=False
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
 
 # --- Main Display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
@@ -182,11 +183,12 @@ if selected_parameter == "County":
             y=county_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
+            labels={"x": "EJI Metric", "y": "RPL Value"},
             title=f"EJI Metrics — {selected_county}"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True, titlefont=dict(color="black")),
+            xaxis=dict(titlefont=dict(color="black")),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -221,11 +223,12 @@ elif selected_parameter == "New Mexico":
             y=nm_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
+            labels={"x": "EJI Metric", "y": "RPL Value"},
             title="EJI Metrics — New Mexico"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True, titlefont=dict(color="black")),
+            xaxis=dict(titlefont=dict(color="black")),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)

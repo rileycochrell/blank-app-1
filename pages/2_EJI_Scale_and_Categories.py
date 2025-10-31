@@ -16,3 +16,65 @@ Below is a visual scale and a reference table showing percentile ranges, categor
 
 # --- COLOR SCALE BAR (green → yellow → orange → red)
 st.image("ff9aadd5-e7d0-4bb7-8ecf-3533237d8d05.png", caption="EJI Percentile Scale (Low to High Burden)", use_container_width=False)
+
+st.markdown("""
+<style>
+.table-container {
+    font-family: "Arial", sans-serif;
+    margin: 20px 0;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+tr:nth-child(2) td { background-color: #d4f9d4; } /* Green */
+tr:nth-child(3) td { background-color: #fffcc2; } /* Yellow */
+tr:nth-child(4) td { background-color: #ffd9b3; } /* Orange */
+tr:nth-child(5) td { background-color: #ffb3b3; } /* Red */
+</style>
+
+<div class="table-container">
+<h2>Percentile Rank Scale</h2>
+<table>
+<tr>
+  <th>Percentile Range</th>
+  <th>Category</th>
+  <th>Color</th>
+  <th>Description</th>
+</tr>
+<tr>
+  <td>0.00 – 0.25</td>
+  <td>Low Concern</td>
+  <td>Green</td>
+  <td>Communities with the lowest combined environmental, social, and health burdens.</td>
+</tr>
+<tr>
+  <td>0.26 – 0.50</td>
+  <td>Moderate Concern</td>
+  <td>Yellow</td>
+  <td>Communities experiencing moderate cumulative burdens or vulnerabilities.</td>
+</tr>
+<tr>
+  <td>0.51 – 0.75</td>
+  <td>High Concern</td>
+  <td>Orange</td>
+  <td>Communities facing substantial cumulative burdens and vulnerabilities.</td>
+</tr>
+<tr>
+  <td>0.76 – 1.00</td>
+  <td>Very High Concern</td>
+  <td>Red</td>
+  <td>Communities with the highest combined environmental, social, and health burdens.</td>
+</tr>
+</table>
+</div>
+""", unsafe_allow_html=True)

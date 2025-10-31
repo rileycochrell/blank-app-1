@@ -75,53 +75,9 @@ dataset2_colors = {
 
 def get_contrast_color(hex_color):
     rgb = tuple(int(hex_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
-    # Corrected brightness calculation using individual rgb components
     brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
     return "black" if brightness > 150 else "white"
 
-# --- improved colored table ---
-def display_colored_table(df, color_map, pretty_map):
-    """
-    Display a DataFrame in Streamlit with:
-    - Colored columns according to color_map
-    - Contrast text color
-    - Centered text
-    """
-    if isinstance(df, pd.Series):
-        df = df.to_frame().T
-
-    # Map column names for display
-    df_display = df.rename(columns=pretty_map)
-
-    # Format numbers safely
-    df_display = df_display.applymap(lambda x: f"{float(x):.3f}" if pd.notnull(x) else "")
-
-    # Create a Pandas Styler
-    styler = df_display.style
-
-    # Apply per-column colors and text alignment
-    for col in df_display.columns:
-        # Reverse pretty_map to find original key for color
-        original_col = [k for k, v in pretty_map.items() if v == col]
-        if original_col:
-            col_color = color_map.get(original_col[0], "#FFFFFF")
-            # Contrast text color
-            rgb = tuple(int(col_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
-            brightness = (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2])
-            text_color = "black" if brightness > 150 else "white"
-            # Apply header style
-            styler = styler.set_table_styles([{
-                "selector": f"th.col{df_display.columns.get_loc(col)}",
-                "props": [("background-color", col_color),
-                          ("color", text_color),
-                          ("text-align", "center")]
-            }])
-            # Apply cell alignment
-            styler = styler.set_properties(subset=[col], **{"text-align": "center"})
-
-    st.dataframe(styler, use_container_width=True)
-
-# --- comparison plot ---
 def plot_comparison(data1, data2, label1, label2, metrics):
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
@@ -130,8 +86,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     }).set_index("Metric").T
 
     st.subheader("📊 Data Comparison Table")
-    # Pass compare_table as a dataframe for display_colored_table
-    display_colored_table(compare_table.reset_index(), dataset1_colors, pretty)
+    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
     fig = go.Figure()
 
@@ -189,7 +144,9 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 
     st.plotly_chart(fig, use_container_width=True)
 
-# --- single bar chart ---
+selected_parameter = st.selectbox("View EJI data for:", parameter1)
+st.write(f"**You selected:** {selected_parameter}")
+
 def plot_single_chart(title, data_values):
     fig = px.bar(
         x=[pretty.get(m, m) for m in metrics],
@@ -219,10 +176,7 @@ def plot_single_chart(title, data_values):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MAIN ---
-selected_parameter = st.selectbox("View EJI data for:", parameter1)
-st.write(f"**You selected:** {selected_parameter}")
-
+# --- MAIN CONTENT ---
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
@@ -231,7 +185,7 @@ if selected_parameter == "County":
         st.warning(f"No data found for {selected_county}.")
     else:
         st.subheader(f"📋 EJI Data for {selected_county}")
-        display_colored_table(subset, dataset1_colors, pretty)
+        st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
         plot_single_chart(f"EJI Metrics — {selected_county}", county_values)
@@ -244,42 +198,41 @@ if selected_parameter == "County":
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
                     plot_comparison(county_values, comp_values, selected_county, comp_state, metrics)
-                else:
-                    st.warning(f"No state data found for {comp_state}.")
             else:
-                comp_county = st.selectbox("Select county:", counties)
+                comp_county = st.selectbox("Select county:", [c for c in counties if c != selected_county])
                 comp_row = county_df[county_df["County"] == comp_county]
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
                     plot_comparison(county_values, comp_values, selected_county, comp_county, metrics)
-                else:
-                    st.warning(f"No county data found for {comp_county}.")
 
-else: # For selected_parameter == "New Mexico" (State level)
-    subset = state_df[state_df["State"] == "New Mexico"]
-    if subset.empty:
-        st.warning("No data found for New Mexico.")
+elif selected_parameter == "New Mexico":
+    nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
+    if nm_row.empty:
+        st.warning("No New Mexico data found in the state file.")
     else:
-        st.subheader("📋 EJI Data for New Mexico (State Average)")
-        display_colored_table(subset, dataset1_colors, pretty)
-        state_values = subset[metrics].iloc[0]
-        plot_single_chart("EJI Metrics — New Mexico (State Average)", state_values)
+        st.subheader("📋 New Mexico Statewide EJI Scores")
+
+        # Use pretty labels in the table
+        pretty_nm = nm_row.rename(columns=pretty)
+        st.dataframe(pretty_nm, hide_index=True)
+
+        nm_values = nm_row[metrics].iloc[0]
+        plot_single_chart("EJI Metrics — New Mexico", nm_values)
 
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":
-                comp_state = st.selectbox("Select state:", states)
+                comp_state = st.selectbox("Select state:", [s for s in states if s.lower() != "new mexico"])
                 comp_row = state_df[state_df["State"] == comp_state]
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
-                    plot_comparison(state_values, comp_values, "New Mexico", comp_state, metrics)
-                else:
-                    st.warning(f"No state data found for {comp_state}.")
+                    plot_comparison(nm_values, comp_values, "New Mexico", comp_state, metrics)
             else:
                 comp_county = st.selectbox("Select county:", counties)
                 comp_row = county_df[county_df["County"] == comp_county]
                 if not comp_row.empty:
                     comp_values = comp_row[metrics].iloc[0]
-                    plot_comparison(state_values, comp_values, "New Mexico", comp_county, metrics)
-                else:
-                    st.warning(f"No county data found for {comp_county}.")
+                    plot_comparison(nm_values, comp_values, "New Mexico", comp_county, metrics)
+
+st.divider()
+st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")

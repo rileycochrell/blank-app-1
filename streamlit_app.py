@@ -1,3 +1,9 @@
+st.set_page_config(
+    page_title="Environmental Justice Index (EJI) — New Mexico",
+    page_icon="🏡",
+)
+st.sidebar.title("🏡 Home")
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -18,7 +24,7 @@ in communities relative to others across the U.S.
 Use the dropdowns below to explore data for **New Mexico** or specific **counties**,  
 and optionally compare datasets side-by-side.
 """)
-st.info("🔴 Rows highlighted in red represent areas with **Very High Concern** (EJI ≥ 0.76).")
+st.info("🔴 Rows highlighted in red represent areas with **Very High Concern/Burden** in one or more areas (EJI ≥ 0.76).")
 
 # --- LOAD DATA ---
 @st.cache_data

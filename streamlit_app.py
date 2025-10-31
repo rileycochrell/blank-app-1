@@ -1,8 +1,7 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
-import numpy as np
+import plotly.graph_objects as go
 
 # --- Page setup ---
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")
@@ -34,7 +33,7 @@ state_df, county_df = load_data()
 if state_df is None or county_df is None:
     st.stop()
 
-# --- Rename columns to RPL-style ---
+# --- Rename columns ---
 rename_map = {
     "Mean_EJI": "RPL_EJI",
     "Mean_EBM": "RPL_EBM",
@@ -61,7 +60,6 @@ dataset1_colors = {
     "RPL_CBM": "#469990",
     "RPL_EJI_CBM": "#801650"
 }
-
 dataset2_colors = {
     "RPL_EJI": "#b88be1",
     "RPL_EBM": "#D2B48C",
@@ -71,19 +69,24 @@ dataset2_colors = {
     "RPL_EJI_CBM": "#f17cb0"
 }
 
-# --- Comparison plot helper ---
-def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Pretty labels ---
-    pretty = {
-        "RPL_EJI": "Overall EJI",
-        "RPL_EBM": "Environmental Burden",
-        "RPL_SVM": "Social Vulnerability",
-        "RVL_HVM": "Health Vulnerability",
-        "RPL_CBM": "Climate Burden",
-        "RPL_EJI_CBM": "EJI + Climate Burden"
-    }
+# --- Pretty labels for readability ---
+pretty = {
+    "RPL_EJI": "Overall EJI",
+    "RPL_EBM": "Environmental Burden",
+    "RPL_SVM": "Social Vulnerability",
+    "RPL_HVM": "Health Vulnerability",
+    "RPL_CBM": "Climate Burden",
+    "RPL_EJI_CBM": "EJI + Climate Burden"
+}
 
-    # --- Table (datasets as rows) ---
+# --- Helper for label contrast ---
+def get_contrast_color(hex_color):
+    rgb = tuple(int(hex_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
+    return "black" if brightness > 150 else "white"
+
+# --- Plot comparison chart ---
+def plot_comparison(data1, data2, label1, label2, metrics):
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
         label1: data1.values,
@@ -93,16 +96,9 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     st.subheader("📊 Data Comparison Table")
     st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
 
-    # --- Contrast-aware text color helper ---
-    def get_contrast_color(hex_color):
-        rgb = tuple(int(hex_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
-        brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
-        return "black" if brightness > 150 else "white"
-
-    # --- Bar chart setup ---
     fig = go.Figure()
 
-    # --- First dataset bars ---
+    # --- Dataset 1 ---
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data1.values),
@@ -112,15 +108,16 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         width=0.35,
         text=[label1 for _ in metrics],
         textposition="inside",
-        textangle=0,  # change to 90 if you want rotated labels
+        textangle=180,  # rotates labels inside the bar
         textfont=dict(
             color=[get_contrast_color(dataset1_colors[m]) for m in metrics],
-            size=10
+            size=11,
+            family="Arial"
         ),
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # --- Second dataset bars ---
+    # --- Dataset 2 ---
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data2.values),
@@ -130,30 +127,33 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         width=0.35,
         text=[label2 for _ in metrics],
         textposition="inside",
-        textangle=0,  # 90 if you want rotated labels
+        textangle=180,
         textfont=dict(
             color=[get_contrast_color(dataset2_colors[m]) for m in metrics],
-            size=10
+            size=11,
+            family="Arial"
         ),
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # --- Layout tweaks ---
     fig.update_layout(
         barmode='group',
-        title=f"EJI Metric Comparison — {label1} vs {label2}",
+        title=dict(
+            text=f"<b>EJI Metric Comparison — {label1} vs {label2}</b>",
+            font=dict(size=20, family="Arial", color="black")
+        ),
         yaxis=dict(
-            title="Percentile Rank Value",
+            title="<b>Percentile Rank Value</b>",
+            titlefont=dict(color="black", size=14, family="Arial"),
             range=[0, 1],
             dtick=0.25,
             gridcolor="#E0E0E0",
             showgrid=True
         ),
         xaxis=dict(
-            title="Environmental Justice Index Modules",
-            tickmode='array',
-            tickvals=[pretty.get(m, m) for m in metrics],
-            ticktext=[pretty.get(m, m) for m in metrics]
+            title="<b>Environmental Justice Index Modules</b>",
+            titlefont=dict(color="black", size=14, family="Arial"),
+            tickfont=dict(size=12, family="Arial")
         ),
         margin=dict(t=60, b=100),
         showlegend=False
@@ -161,7 +161,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 
     st.plotly_chart(fig, use_container_width=True)
 
-# --- Main Display ---
+# --- Main display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
@@ -176,21 +176,34 @@ if selected_parameter == "County":
         st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
+
         fig = px.bar(
-            x=metrics,
+            x=[pretty.get(m, m) for m in metrics],
             y=county_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
+            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
             title=f"EJI Metrics — {selected_county}"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            yaxis=dict(
+                title="<b>Percentile Rank Value</b>",
+                titlefont=dict(color="black", size=14, family="Arial"),
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True
+            ),
+            xaxis=dict(
+                title="<b>Environmental Justice Index Modules</b>",
+                titlefont=dict(color="black", size=14, family="Arial"),
+                tickfont=dict(size=12, family="Arial")
+            ),
+            title=dict(font=dict(size=20, family="Arial", color="black")),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Comparison Option
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":
@@ -208,6 +221,7 @@ if selected_parameter == "County":
 
 elif selected_parameter == "New Mexico":
     nm_row = state_df[state_df["State"].str.strip().str.lower() == "new mexico"]
+
     if nm_row.empty:
         st.warning("No New Mexico data found in the state file.")
     else:
@@ -215,21 +229,34 @@ elif selected_parameter == "New Mexico":
         st.dataframe(nm_row, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
+
         fig = px.bar(
-            x=metrics,
+            x=[pretty.get(m, m) for m in metrics],
             y=nm_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
+            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
             title="EJI Metrics — New Mexico"
         )
         fig.update_layout(
-            yaxis=dict(range=[0, 1], dtick=0.25, gridcolor="#E0E0E0", showgrid=True),
+            yaxis=dict(
+                title="<b>Percentile Rank Value</b>",
+                titlefont=dict(color="black", size=14, family="Arial"),
+                range=[0, 1],
+                dtick=0.25,
+                gridcolor="#E0E0E0",
+                showgrid=True
+            ),
+            xaxis=dict(
+                title="<b>Environmental Justice Index Modules</b>",
+                titlefont=dict(color="black", size=14, family="Arial"),
+                tickfont=dict(size=12, family="Arial")
+            ),
+            title=dict(font=dict(size=20, family="Arial", color="black")),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Comparison Option
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":

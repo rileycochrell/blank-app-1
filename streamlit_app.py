@@ -78,6 +78,44 @@ def get_contrast_color(hex_color):
     brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
     return "black" if brightness > 150 else "white"
 
+# --- improved colored table ---
+def display_colored_table(df, color_map, pretty_map):
+    """Display dataframe with colored headers and black-bordered cells."""
+    if isinstance(df, pd.Series):
+        df = df.to_frame().T
+
+    df = df.rename(columns=pretty_map)
+
+    # format numbers safely
+    def safe_format(x):
+        try:
+            return f"{float(x):.3f}"
+        except Exception:
+            return str(x)
+
+    df = df.applymap(safe_format)
+
+    inv_map = {v: k for k, v in pretty_map.items()}
+    header_styles = [
+        {
+            "selector": f"th.col{i}",
+            "props": f"background-color: {color_map.get(inv_map.get(col, ''), '#FFFFFF')}; "
+                     f"color: {get_contrast_color(color_map.get(inv_map.get(col, ''), '#FFFFFF'))}; "
+                     "text-align: center; font-weight: bold; border: 1px solid black;"
+        }
+        for i, col in enumerate(df.columns)
+    ]
+
+    body_styles = [
+        {"selector": "td", "props": "text-align: center; border: 1px solid black;"},
+        {"selector": "th.row_heading", "props": "background-color: #f2f2f2; border: 1px solid black;"},
+        {"selector": "table", "props": "border-collapse: collapse; border: 2px solid black;"}
+    ]
+
+    styled = df.style.set_table_styles(header_styles + body_styles)
+    st.dataframe(styled, width='stretch')
+
+# --- comparison plot ---
 def plot_comparison(data1, data2, label1, label2, metrics):
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
@@ -86,7 +124,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     }).set_index("Metric").T
 
     st.subheader("📊 Data Comparison Table")
-    st.dataframe(compare_table.style.format("{:.3f}"), use_container_width=True)
+    display_colored_table(compare_table.reset_index(), dataset1_colors, pretty)
 
     fig = go.Figure()
 
@@ -144,9 +182,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 
     st.plotly_chart(fig, use_container_width=True)
 
-selected_parameter = st.selectbox("View EJI data for:", parameter1)
-st.write(f"**You selected:** {selected_parameter}")
-
+# --- single bar chart ---
 def plot_single_chart(title, data_values):
     fig = px.bar(
         x=[pretty.get(m, m) for m in metrics],
@@ -176,7 +212,10 @@ def plot_single_chart(title, data_values):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MAIN CONTENT ---
+# --- MAIN ---
+selected_parameter = st.selectbox("View EJI data for:", parameter1)
+st.write(f"**You selected:** {selected_parameter}")
+
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
@@ -185,7 +224,7 @@ if selected_parameter == "County":
         st.warning(f"No data found for {selected_county}.")
     else:
         st.subheader(f"📋 EJI Data for {selected_county}")
-        st.dataframe(subset, hide_index=True)
+        display_colored_table(subset, dataset1_colors, pretty)
 
         county_values = subset[metrics].iloc[0]
         plot_single_chart(f"EJI Metrics — {selected_county}", county_values)
@@ -211,10 +250,7 @@ elif selected_parameter == "New Mexico":
         st.warning("No New Mexico data found in the state file.")
     else:
         st.subheader("📋 New Mexico Statewide EJI Scores")
-
-        # Use pretty labels in the table
-        pretty_nm = nm_row.rename(columns=pretty)
-        st.dataframe(pretty_nm, hide_index=True)
+        display_colored_table(nm_row, dataset1_colors, pretty)
 
         nm_values = nm_row[metrics].iloc[0]
         plot_single_chart("EJI Metrics — New Mexico", nm_values)

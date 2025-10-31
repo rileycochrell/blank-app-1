@@ -18,6 +18,7 @@ in communities relative to others across the U.S.
 Use the dropdowns below to explore data for **New Mexico** or specific **counties**,  
 and optionally compare datasets side-by-side.
 """)
+st.info("🔴 Rows highlighted in red represent areas with **Very High Concern** (EJI ≥ 0.76).")
 
 # --- LOAD DATA ---
 @st.cache_data
@@ -88,17 +89,11 @@ def get_contrast_color(hex_color):
 
 # --- CUSTOM COLORED TABLE FUNCTION (HTML RENDERING) ---
 def display_colored_table_html(df, color_map, pretty_map, title=None):
-    """Render a DataFrame with colored column headers in Streamlit using raw HTML, 
-    and highlight rows with 'Very High Concern' or values >= 0.76."""
+    """Render a DataFrame with colored column headers and highlight rows with Very High Concern or EJI ≥ 0.76."""
     if isinstance(df, pd.Series):
         df = df.to_frame().T
 
     df_display = df.rename(columns=pretty_map)
-
-    # Format numeric values safely
-    df_display = df_display.applymap(
-        lambda x: f"{x:.3f}" if isinstance(x, (int, float)) else x
-    )
 
     if title:
         st.markdown(f"### {title}")
@@ -114,19 +109,28 @@ def display_colored_table_html(df, color_map, pretty_map, title=None):
         header_html += f'<th style="background-color:{color};color:{text_color};padding:6px;text-align:center;">{col}</th>'
     header_html += "</tr>"
 
-    # --- Build table body with conditional highlighting ---
+    # Build table body with highlighting
     body_html = ""
     for _, row in df_display.iterrows():
-        # Check if the row qualifies as "Very High" (EJI >= 0.76 or text match)
-        is_very_high = any(
-            (isinstance(val, str) and "very high" in val.lower()) or
-            (isinstance(val, (int, float)) and float(val) >= 0.76)
-            for val in row
-        )
-        row_bg = "background-color:#ffb3b3;" if is_very_high else ""
-        body_html += f"<tr style='{row_bg}'>"
+        highlight = False
         for val in row:
-            body_html += f"<td style='text-align:center;padding:4px;border:1px solid #ccc'>{val}</td>"
+            try:
+                # Catch both float values and strings like "0.87"
+                num_val = float(str(val).replace(",", "").strip())
+                if num_val >= 0.76:
+                    highlight = True
+                    break
+            except ValueError:
+                # If it's not numeric, check for text label
+                if isinstance(val, str) and "very high" in val.lower():
+                    highlight = True
+                    break
+
+        row_style = "background-color:#ffb3b3;" if highlight else ""
+        body_html += f"<tr style='{row_style}'>"
+        for val in row:
+            cell_val = val if not isinstance(val, float) else f"{val:.3f}"
+            body_html += f"<td style='text-align:center;padding:4px;border:1px solid #ccc'>{cell_val}</td>"
         body_html += "</tr>"
 
     table_html = f"""

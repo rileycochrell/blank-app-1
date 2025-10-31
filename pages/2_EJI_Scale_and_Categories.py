@@ -15,7 +15,7 @@ Below is a visual scale and a reference table showing percentile ranges, categor
 """)
 
 # --- COLOR SCALE BAR (green → yellow → orange → red)
-st.image("ff9aadd5-e7d0-4bb7-8ecf-3533237d8d05.png", caption="EJI Percentile Scale (Low to High Burden)", use_container_width=False)
+st.image("Screenshot 2025-10-31 021125lovely scale group.png", caption="EJI Percentile Scale (Low to High Burden)", use_container_width=False)
 
 st.markdown("""
 <style>

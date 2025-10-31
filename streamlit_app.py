@@ -80,30 +80,32 @@ def get_contrast_color(hex_color):
 
 # --- colored header table helper ---
 def display_colored_table(df, color_map, pretty_map):
-    """Display dataframe with column headers colored to match bar chart colors."""
-    styled_df = df.rename(columns=pretty_map)
-    styled = styled_df.style.format("{:.3f}", na_rep="-")
+    """Display dataframe with colored headers matching the chart colors."""
+    if isinstance(df, pd.Series):
+        df = df.to_frame().T
 
-    header_props = {
-        pretty_map[m]: f"color: {get_contrast_color(color_map[m])}; "
-                       f"background-color: {color_map[m]}; "
-                       f"font-weight: bold;"
-        for m in metrics if m in color_map
-    }
+    df = df.rename(columns=pretty_map)
 
-    styled = styled.set_table_styles(
-        [
-            {"selector": "th.col_heading.level0",
-             "props": "text-align: center; font-weight: bold;"},
-        ]
-        + [
-            {"selector": f"th.col_heading.level0:nth-child({i+2})",
-             "props": header_props.get(pretty_map[m], "")}
-            for i, m in enumerate(metrics)
-            if m in pretty_map
-        ]
-    )
-    st.dataframe(styled, use_container_width=True)
+    # Safe numeric formatting
+    def safe_format(x):
+        if isinstance(x, (int, float)):
+            return f"{x:.3f}"
+        return str(x)
+
+    df = df.applymap(safe_format)
+
+    # Apply color styling to headers
+    def highlight_headers(col):
+        inv_map = {v: k for k, v in pretty_map.items()}
+        key = inv_map.get(col, None)
+        if key and key in color_map:
+            bg = color_map[key]
+            fg = get_contrast_color(bg)
+            return [f"background-color: {bg}; color: {fg}; font-weight: bold; text-align: center;"] * len(df)
+        return [""] * len(df)
+
+    styled = df.style.apply(highlight_headers, axis=0)
+    st.dataframe(styled, width='stretch')
 
 # --- chart functions ---
 def plot_comparison(data1, data2, label1, label2, metrics):
@@ -255,3 +257,4 @@ elif selected_parameter == "New Mexico":
 
 st.divider()
 st.caption("Data Source: CDC Environmental Justice Index | Visualization by Riley Cochrell")
+

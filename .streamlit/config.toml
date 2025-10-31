@@ -1,8 +1,7 @@
 [theme]
-dataframeHeaderBackgroundColor = "#4363d8"
 base="light"
 primaryColor="#F63366"
-backgroundColor="#FFFFFF"
-secondaryBackgroundColor="#4363d8"
+backgroundColor="#4363d8"
+secondaryBackgroundColor="#FFFFFF"
 textColor="#262730"
 font="sans serif"

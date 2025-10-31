@@ -147,6 +147,36 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
+def plot_single_chart(title, data_values):
+    fig = px.bar(
+        x=[pretty.get(m, m) for m in metrics],
+        y=data_values.values,
+        color=metrics,
+        color_discrete_map=dataset1_colors,
+        labels={"x": "EJI Metric", "y": "Percentile Rank Value"},
+        title=title
+    )
+
+    fig.update_layout(
+        yaxis=dict(
+            title=dict(text="Percentile Rank Value", font=dict(color="black")),
+            range=[0, 1],
+            dtick=0.25,
+            gridcolor="#E0E0E0",
+            showgrid=True
+        ),
+        xaxis=dict(
+            title=dict(text="Environmental Justice Index Modules", font=dict(color="black")),
+            tickmode='array',
+            tickvals=[pretty.get(m, m) for m in metrics],
+            ticktext=[pretty.get(m, m) for m in metrics]
+        ),
+        showlegend=False,
+        margin=dict(t=60, b=100)
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# --- MAIN CONTENT ---
 if selected_parameter == "County":
     selected_county = st.selectbox("Select a New Mexico County:", counties)
     subset = county_df[county_df["County"] == selected_county]
@@ -158,27 +188,7 @@ if selected_parameter == "County":
         st.dataframe(subset, hide_index=True)
 
         county_values = subset[metrics].iloc[0]
-        fig = px.bar(
-            x=[pretty.get(m, m) for m in metrics],
-            y=county_values.values,
-            color=metrics,
-            color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
-            title=f"EJI Metrics — {selected_county}"
-        )
-        fig.update_layout(
-            yaxis=dict(
-                title=dict(text="RPL Value", font=dict(color="black")),
-                range=[0, 1],
-                dtick=0.25,
-                gridcolor="#E0E0E0"
-            ),
-            xaxis=dict(
-                title=dict(text="EJI Metric", font=dict(color="black"))
-            ),
-            showlegend=False
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        plot_single_chart(f"EJI Metrics — {selected_county}", county_values)
 
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
@@ -204,27 +214,7 @@ elif selected_parameter == "New Mexico":
         st.dataframe(nm_row, hide_index=True)
 
         nm_values = nm_row[metrics].iloc[0]
-        fig = px.bar(
-            x=[pretty.get(m, m) for m in metrics],
-            y=nm_values.values,
-            color=metrics,
-            color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
-            title="EJI Metrics — New Mexico"
-        )
-        fig.update_layout(
-            yaxis=dict(
-                title=dict(text="RPL Value", font=dict(color="black")),
-                range=[0, 1],
-                dtick=0.25,
-                gridcolor="#E0E0E0"
-            ),
-            xaxis=dict(
-                title=dict(text="EJI Metric", font=dict(color="black"))
-            ),
-            showlegend=False
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        plot_single_chart("EJI Metrics — New Mexico", nm_values)
 
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])

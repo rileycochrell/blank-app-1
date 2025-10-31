@@ -78,7 +78,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         "RPL_EJI": "Overall EJI",
         "RPL_EBM": "Environmental Burden",
         "RPL_SVM": "Social Vulnerability",
-        "RVL_HVM": "Health Vulnerability",
+        "RPL_HVM": "Health Vulnerability",
         "RPL_CBM": "Climate Burden",
         "RPL_EJI_CBM": "EJI + Climate Burden"
     }
@@ -112,7 +112,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         width=0.35,
         text=[label1 for _ in metrics],
         textposition="inside",
-        textangle=0,  # change to 90 if you want rotated labels
+        textangle=0,
         textfont=dict(
             color=[get_contrast_color(dataset1_colors[m]) for m in metrics],
             size=10
@@ -130,7 +130,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         width=0.35,
         text=[label2 for _ in metrics],
         textposition="inside",
-        textangle=0,  # 90 if you want rotated labels
+        textangle=0,
         textfont=dict(
             color=[get_contrast_color(dataset2_colors[m]) for m in metrics],
             size=10
@@ -143,14 +143,14 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
         yaxis=dict(
-            title="Percentile Rank Value",
+            title=dict(text="Percentile Rank Value", font=dict(color="black")),
             range=[0, 1],
             dtick=0.25,
             gridcolor="#E0E0E0",
             showgrid=True
         ),
         xaxis=dict(
-            title="Environmental Justice Index Modules",
+            title=dict(text="Environmental Justice Index Modules", font=dict(color="black")),
             tickmode='array',
             tickvals=[pretty.get(m, m) for m in metrics],
             ticktext=[pretty.get(m, m) for m in metrics]
@@ -160,6 +160,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 # --- Main Display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
@@ -177,11 +178,11 @@ if selected_parameter == "County":
 
         county_values = subset[metrics].iloc[0]
         fig = px.bar(
-            x=metrics,
+            x=[pretty.get(m, m) for m in metrics],
             y=county_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
+            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
             title=f"EJI Metrics — {selected_county}"
         )
         fig.update_layout(
@@ -216,11 +217,11 @@ elif selected_parameter == "New Mexico":
 
         nm_values = nm_row[metrics].iloc[0]
         fig = px.bar(
-            x=metrics,
+            x=[pretty.get(m, m) for m in metrics],
             y=nm_values.values,
             color=metrics,
             color_discrete_map=dataset1_colors,
-            labels={"x": "EJI Metric", "y": "RPL Value"},
+            labels={"x": "Environmental Justice Index Modules", "y": "Percentile Rank Value"},
             title="EJI Metrics — New Mexico"
         )
         fig.update_layout(

@@ -33,7 +33,7 @@ state_df, county_df = load_data()
 if state_df is None or county_df is None:
     st.stop()
 
-# --- Rename columns to RPL-style ---
+# --- Rename columns ---
 rename_map = {
     "Mean_EJI": "RPL_EJI",
     "Mean_EBM": "RPL_EBM",
@@ -80,15 +80,14 @@ dataset2_colors = {
     "RPL_EJI_CBM": "#f17cb0"
 }
 
-# --- Helper function to get readable text color ---
+# --- Helper to choose readable text color ---
 def get_contrast_color(hex_color):
     rgb = tuple(int(hex_color.strip("#")[i:i+2], 16) for i in (0, 2, 4))
     brightness = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])
     return "black" if brightness > 150 else "white"
 
-# --- Helper function to plot grouped comparison ---
+# --- Helper to plot grouped comparison ---
 def plot_comparison(data1, data2, label1, label2, metrics):
-    # --- Table (datasets as rows) ---
     compare_table = pd.DataFrame({
         "Metric": [pretty.get(m, m) for m in metrics],
         label1: data1.values,
@@ -100,7 +99,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 
     fig = go.Figure()
 
-    # --- Dataset 1 bars ---
+    # Dataset 1
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data1.values),
@@ -117,7 +116,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # --- Dataset 2 bars ---
+    # Dataset 2
     fig.add_trace(go.Bar(
         x=[pretty.get(m, m) for m in metrics],
         y=list(data2.values),
@@ -134,7 +133,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
     ))
 
-    # --- Layout ---
+    # Layout (fix: no tickvals)
     fig.update_layout(
         barmode='group',
         title=f"EJI Metric Comparison — {label1} vs {label2}",
@@ -149,9 +148,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         xaxis=dict(
             title="<b>Environmental Justice Index Modules</b>",
             titlefont=dict(color="black"),
-            tickmode='array',
-            tickvals=[pretty.get(m, m) for m in metrics],
-            ticktext=[pretty.get(m, m) for m in metrics]
+            tickangle=0
         ),
         margin=dict(t=60, b=100),
         showlegend=False
@@ -159,7 +156,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
 
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MAIN DISPLAY ---
+# --- Main display ---
 selected_parameter = st.selectbox("View EJI data for:", parameter1)
 st.write(f"**You selected:** {selected_parameter}")
 
@@ -189,8 +186,7 @@ if selected_parameter == "County":
                 titlefont=dict(color="black"),
                 range=[0, 1],
                 dtick=0.25,
-                gridcolor="#E0E0E0",
-                showgrid=True
+                gridcolor="#E0E0E0"
             ),
             xaxis=dict(
                 title="<b>Environmental Justice Index Modules</b>",
@@ -200,7 +196,6 @@ if selected_parameter == "County":
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":
@@ -241,8 +236,7 @@ elif selected_parameter == "New Mexico":
                 titlefont=dict(color="black"),
                 range=[0, 1],
                 dtick=0.25,
-                gridcolor="#E0E0E0",
-                showgrid=True
+                gridcolor="#E0E0E0"
             ),
             xaxis=dict(
                 title="<b>Environmental Justice Index Modules</b>",
@@ -252,7 +246,6 @@ elif selected_parameter == "New Mexico":
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # --- Comparison Option ---
         if st.checkbox("Compare with another dataset"):
             compare_type = st.radio("Compare with:", ["State", "County"])
             if compare_type == "State":

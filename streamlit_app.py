@@ -23,8 +23,7 @@ st.write("""
 The **Environmental Justice Index (EJI)** measures cumulative environmental, social, and health burdens 
 in communities relative to others across the U.S.  
 
-Use the dropdowns below to explore data for **New Mexico** or specific **counties**,  
-and optionally compare datasets side-by-side.
+Use the dropdowns below to explore data for **New Mexico** or specific **counties**, and optionally compare datasets side-by-side.
 """)
 st.info("🔴 Rows highlighted in red represent areas with **Very High Concern/Burden** in one or more areas (EJI ≥ 0.76).")
 

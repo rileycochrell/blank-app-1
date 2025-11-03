@@ -8,7 +8,6 @@ def main():
         page_icon="🏡",
         layout="wide"
     )
-# --- OPTIONAL SIDEBAR TITLE ---
 st.sidebar.title("🏡 Home")
 
 st.set_page_config(page_title="Environmental Justice Index (EJI) — New Mexico", layout="wide")

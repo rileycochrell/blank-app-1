@@ -13,7 +13,7 @@ With the rapid development of modern infrastructure, we often fail to see the bu
 
 For this research, we will use the Centers for Disease Control and Prevention’s (CDC) Environmental Justice Index (EJI) dataset. The dataset integrates 36 environmental health indicators across five domains with socioeconomic variables, which is great for this area of study. We assume that low-income populations will face higher EJI scores, leading to greater risk. We aim to provide data for knowledge-based learning and awareness, and urban planning to decrease environmental injustices.
 
-Dataset: https://www.atsdr.cdc.gov/place-health/php/eji/index.html
+Raw Dataset: https://www.atsdr.cdc.gov/place-health/php/eji/eji-data-download.html
 
 ## Plan of Approach
 ### Step 1: Find and Understand the Data

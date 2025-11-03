@@ -1,8 +1,8 @@
-# 🎈 Blank app template
+# 🌎 Environmental Justice Index Visualization (New Mexico)
 
 A simple Streamlit app template for you to modify!
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+[![Open in Streamlit](https://blank-app-60hc5b2b5hr.streamlit.app/~/+/#environmental-justice-index-visualization-new-mexico)
 
 ### How to run it on your own machine
 

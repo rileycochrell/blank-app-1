@@ -26,7 +26,7 @@ Use the dropdowns below to explore data for **New Mexico** or specific **countie
 """)
 st.info("🔴 Rows highlighted in red represent areas with **Very High Concern/Burden** in one or more areas (EJI ≥ 0.76).")
 
-# --- LOAD DATA ---
+# --- LOAD DATA ---+bug
 @st.cache_data
 def load_data():
     state_url = "https://github.com/rileycochrell/rc-EJI-Visualization-NM/raw/refs/heads/main/data/EJI_StateAverages_RPL.csv"
@@ -115,7 +115,7 @@ def display_colored_table_html(df, color_map, pretty_map, title=None):
         header_html += f'<th style="background-color:{color};color:{text_color};padding:6px;text-align:center;">{col}</th>'
     header_html += "</tr>"
 
-    # Build table body with highlighting
+    # Build table body with highlighting + bug
     body_html = ""
     for _, row in df_display.iterrows():
         highlight = False

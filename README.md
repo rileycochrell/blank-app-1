@@ -2,7 +2,7 @@
 
 A simple Streamlit app template for you to modify!
 
-[![Open in Streamlit](https://blank-app-60hc5b2b5hr.streamlit.app/#environmental-justice-index-visualization-new-mexico)
+[![Open in Streamlit](https://blank-app-60hc5b2b5hr.streamlit.app/)
 
 ### How to run it on your own machine
 

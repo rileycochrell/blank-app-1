@@ -69,7 +69,7 @@ pretty = {
     "RPL_EJI_CBM": "EJI + Climate Burden"
 }
 
-dataset1_colors = {
+dataset1_rainbows = {
     "RPL_EJI": "#911eb4",
     "RPL_EBM": "#c55c29",
     "RPL_SVM": "#4363d8",
@@ -78,7 +78,7 @@ dataset1_colors = {
     "RPL_EJI_CBM": "#801650"
 }
 
-dataset2_colors = {
+dataset2_rainbows = {
     "RPL_EJI": "#b88be1",
     "RPL_EBM": "#D2B48C",
     "RPL_SVM": "#87a1e5",
@@ -158,7 +158,7 @@ def plot_comparison(data1, data2, label1, label2, metrics):
     }).set_index("Metric").T
 
     st.subheader("📊 Data Comparison Table")
-    display_colored_table_html(compare_table, dataset1_colors, pretty)
+    display_colored_table_html(compare_table, dataset1_rainbows, pretty)
 
     fig = go.Figure()
 
@@ -166,13 +166,13 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         x=[pretty.get(m, m) for m in metrics],
         y=list(data1.values),
         name=label1,
-        marker_color=[dataset1_colors[m] for m in metrics],
+        marker_color=[dataset1_rainbows[m] for m in metrics],
         offsetgroup=0,
         width=0.35,
         text=[label1 for _ in metrics],
         textposition="inside",
         textfont=dict(
-            color=[get_contrast_color(dataset1_colors[m]) for m in metrics],
+            color=[get_contrast_color(dataset1_rainbows[m]) for m in metrics],
             size=10
         ),
         hovertemplate="%{x}<br>" + label1 + ": %{y:.3f}<extra></extra>"
@@ -182,13 +182,13 @@ def plot_comparison(data1, data2, label1, label2, metrics):
         x=[pretty.get(m, m) for m in metrics],
         y=list(data2.values),
         name=label2,
-        marker_color=[dataset2_colors[m] for m in metrics],
+        marker_color=[dataset2_rainbows[m] for m in metrics],
         offsetgroup=1,
         width=0.35,
         text=[label2 for _ in metrics],
         textposition="inside",
         textfont=dict(
-            color=[get_contrast_color(dataset2_colors[m]) for m in metrics],
+            color=[get_contrast_color(dataset2_rainbows[m]) for m in metrics],
             size=10
         ),
         hovertemplate="%{x}<br>" + label2 + ": %{y:.3f}<extra></extra>"
@@ -209,7 +209,7 @@ def plot_single_chart(title, data_values):
         x=[pretty.get(m, m) for m in metrics],
         y=data_values.values,
         color=metrics,
-        color_discrete_map=dataset1_colors,
+        color_discrete_map=dataset1_rainbows,
         labels={"x": "Environmental Justice Index Metric", "y": "Percentile Rank Value"},
         title=title
     )
@@ -232,7 +232,7 @@ if selected_parameter == "County":
         st.warning(f"No data found for {selected_county}.")
     else:
         st.subheader(f"📋 EJI Data for {selected_county}")
-        display_colored_table_html(subset, dataset1_colors, pretty)
+        display_colored_table_html(subset, dataset1_rainbows, pretty)
 
         county_values = subset[metrics].iloc[0]
         plot_single_chart(f"EJI Metrics — {selected_county}", county_values)
@@ -258,7 +258,7 @@ elif selected_parameter == "New Mexico":
         st.warning("No New Mexico data found in the state file.")
     else:
         st.subheader("📋 New Mexico Statewide EJI Scores")
-        display_colored_table_html(nm_row, dataset1_colors, pretty)
+        display_colored_table_html(nm_row, dataset1_rainbows, pretty)
         nm_values = nm_row[metrics].iloc[0]
         plot_single_chart("EJI Metrics — New Mexico", nm_values)
 
